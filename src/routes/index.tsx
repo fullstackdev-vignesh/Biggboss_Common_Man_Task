@@ -1,13 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
+import { X } from "lucide-react";
 import { useState } from "react";
 import { ExperienceProvider, useExperience } from "@/hooks/useExperience";
 import { PageTransition } from "@/components/PageTransition";
 import { SplashScreen } from "@/components/SplashScreen";
 import { WheelScreen } from "@/components/WheelScreen";
 import { CoinScreen } from "@/components/CoinScreen";
+import { ClaimConsentFlow } from "@/components/ClaimConsentFlow";
 
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    token: typeof search["token"] === "string" ? search["token"] : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Bigg Boss Season 10 — Common Man Task" },
@@ -24,12 +29,20 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-  component: () => (
+  component: RootIndexRoute,
+});
+
+function RootIndexRoute() {
+  const { token } = Route.useSearch();
+
+  if (token) return <ClaimConsentFlow token={token} />;
+
+  return (
     <ExperienceProvider>
       <Experience />
     </ExperienceProvider>
-  ),
-});
+  );
+}
 
 function Experience() {
   const { stage, sessionId, spinResult, entering, enterTask, setSpinResult, proceedToCoin, reset } =
@@ -46,6 +59,18 @@ function Experience() {
 
   return (
     <main className="relative min-h-screen w-full overflow-x-hidden bg-background">
+      {(stage === "wheel" || stage === "coin") && (
+        <button
+          type="button"
+          onClick={reset}
+          aria-label="Exit"
+          className="fixed right-4 top-4 z-50 flex items-center gap-1.5 rounded-full border border-primary/40 bg-black/40 px-4 py-2 text-xs tracking-wide text-primary backdrop-blur transition-colors hover:bg-black/60 sm:right-6 sm:top-6"
+        >
+          <X className="size-4" />
+          Exit
+        </button>
+      )}
+
       <AnimatePresence mode="wait">
         {stage === "splash" && (
           <PageTransition key="splash">

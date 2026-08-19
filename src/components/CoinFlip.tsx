@@ -7,8 +7,8 @@ import type { CoinFace } from "@/types";
 /** Chance of landing the Bigg Boss (success) face. Tune freely. */
 export const WIN_PROBABILITY = 0.5;
 
-const FLIP_DURATION = 3.4; // seconds
-const FULL_FLIPS = 5;
+const FLIP_DURATION = 6; // seconds
+const FULL_FLIPS = 4;
 
 interface CoinFlipProps {
   onResult: (face: CoinFace) => void;

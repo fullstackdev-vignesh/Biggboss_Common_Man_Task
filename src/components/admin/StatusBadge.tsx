@@ -43,6 +43,8 @@ export function taskStatusTone(status?: string | null): Tone {
 export function coinResultTone(result?: string | null): Tone {
   if (result === "COUPON") return "gold";
   if (result === "COUPON_PENDING") return "pending";
+  if (result === "NOT_INTERESTED") return "muted";
+  if (result === "COUPON_DECLINED") return "danger";
   if (result === "BETTER_LUCK_NEXT_TIME") return "amber";
   if (result === "NOT_ELIGIBLE") return "muted";
   return "pending";
@@ -51,6 +53,8 @@ export function coinResultTone(result?: string | null): Tone {
 export const COIN_RESULT_LABEL: Record<string, string> = {
   COUPON: "Coupon Winner",
   COUPON_PENDING: "Pending (Claim Link)",
+  NOT_INTERESTED: "Not Interested",
+  COUPON_DECLINED: "Coupon Declined",
   BETTER_LUCK_NEXT_TIME: "Better Luck Next Time",
   NOT_ELIGIBLE: "Not Eligible",
   NOT_FLIPPED: "Not Flipped Yet",

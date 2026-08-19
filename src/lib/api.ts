@@ -40,6 +40,8 @@ export interface BiggUser {
   coinFlipCompletedAt?: string | null;
   couponCode?: string | null;
   claimAccepted?: boolean;
+  claimDeclined?: boolean;
+  claimLinkDeclined?: boolean;
   completedAt?: string | null;
   createdAt: string;
 }
@@ -95,11 +97,31 @@ export function registerClaim(sessionId: string, name: string, phone: string) {
   });
 }
 
+/** Cancel on the coin-win form — the participant won but doesn't want to claim. */
+export function declineClaim(sessionId: string) {
+  return request<{ ok: true }>("/api/claim/decline", {
+    method: "POST",
+    body: JSON.stringify({ sessionId }),
+  });
+}
+
+export interface ClaimLocation {
+  lat: number;
+  lng: number;
+}
+
 export interface ClaimInfo {
+  expired: boolean;
   name: string | null;
+  phone: string | null;
+  participantId: string;
   wheelCategory: string | null;
-  wheelTask: string | null;
+  wheelSpinCompletedAt: string | null;
+  taskCompletedAt: string | null;
+  coinFlipCompletedAt: string | null;
+  detailsSubmittedAt: string | null;
   claimAccepted: boolean;
+  claimLinkDeclined: boolean;
   couponCode: string | null;
 }
 
@@ -107,9 +129,18 @@ export function getClaim(token: string) {
   return request<{ ok: true } & ClaimInfo>(`/api/claim/${token}`);
 }
 
-export function acceptClaim(token: string) {
+/** "Accept" on the claim-link consent page — the only action that reveals the coupon code. */
+export function acceptClaim(token: string, location?: ClaimLocation) {
   return request<{ ok: true; name: string | null; couponCode: string }>(
     `/api/claim/${token}/accept`,
-    { method: "POST" },
+    { method: "POST", body: JSON.stringify(location ?? {}) },
   );
+}
+
+/** "Decline" on the claim-link consent page — won the coin flip, chose not to claim. */
+export function declineClaimLink(token: string, location?: ClaimLocation) {
+  return request<{ ok: true; name: string | null }>(`/api/claim/${token}/decline`, {
+    method: "POST",
+    body: JSON.stringify(location ?? {}),
+  });
 }

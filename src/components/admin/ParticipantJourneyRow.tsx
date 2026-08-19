@@ -106,6 +106,8 @@ export function ParticipantJourneyRow({
           <CouponCode code={p.couponCode} />
         ) : coinResult === "COUPON_PENDING" ? (
           <span className="text-xs text-amber">Awaiting claim link</span>
+        ) : coinResult === "COUPON_DECLINED" ? (
+          <span className="text-destructive text-xs">Declined by participant</span>
         ) : (
           <span className="text-muted-foreground">—</span>
         )}
@@ -115,7 +117,7 @@ export function ParticipantJourneyRow({
           tone={
             status === "COUPON_WINNER"
               ? "gold"
-              : status === "TASK_FAILED"
+              : status === "TASK_FAILED" || status === "COUPON_DECLINED"
                 ? "danger"
                 : status === "BETTER_LUCK_NEXT_TIME" || status === "COUPON_PENDING"
                   ? "amber"

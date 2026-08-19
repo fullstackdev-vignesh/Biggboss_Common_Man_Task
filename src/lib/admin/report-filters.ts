@@ -22,7 +22,14 @@ export interface ReportFilters {
   taskStatus: "ALL" | "COMPLETED" | "FAILED" | "PENDING";
   category: string;
   coinResult:
-    "ALL" | "COUPON" | "COUPON_PENDING" | "BETTER_LUCK_NEXT_TIME" | "NOT_ELIGIBLE" | "NOT_FLIPPED";
+    | "ALL"
+    | "COUPON"
+    | "COUPON_PENDING"
+    | "NOT_INTERESTED"
+    | "COUPON_DECLINED"
+    | "BETTER_LUCK_NEXT_TIME"
+    | "NOT_ELIGIBLE"
+    | "NOT_FLIPPED";
 }
 
 const TZ = "Asia/Kolkata";
@@ -135,8 +142,11 @@ export function computeStats(rows: ParticipantJourney[]) {
     completed: rows.filter((p) => p.taskStatus === "COMPLETED").length,
     failed: rows.filter((p) => p.taskStatus === "FAILED").length,
     coinRound: rows.filter((p) => !!p.coinFlipCompletedAt).length,
-    winners: rows.filter((p) => p.coinResult === "COUPON" || p.coinResult === "COUPON_PENDING")
-      .length,
+    winners: rows.filter((p) =>
+      ["COUPON", "COUPON_PENDING", "NOT_INTERESTED", "COUPON_DECLINED"].includes(
+        p.coinResult ?? "",
+      ),
+    ).length,
     betterLuck: rows.filter((p) => p.coinResult === "BETTER_LUCK_NEXT_TIME").length,
   };
 }

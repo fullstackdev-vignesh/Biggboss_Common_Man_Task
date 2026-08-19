@@ -5,7 +5,7 @@ import { AnimatedBackground } from "./AnimatedBackground";
 import { CoinFlip } from "./CoinFlip";
 import { GoldConfetti } from "./GoldConfetti";
 import { isValidIndianMobile } from "@/lib/utils";
-import { registerClaim, saveCoinResult, startCoin } from "@/lib/api";
+import { declineClaim, registerClaim, saveCoinResult, startCoin } from "@/lib/api";
 import { playSound } from "@/lib/sound";
 import type { CoinFace } from "@/types";
 
@@ -18,9 +18,11 @@ export function CoinScreen({ sessionId, onFinish }: CoinScreenProps) {
   const [face, setFace] = useState<CoinFace | null>(null);
   const [claimLink, setClaimLink] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   const handleFlipStart = useCallback(() => {
     void startCoin(sessionId).catch((err) => console.error("startCoin failed", err));
@@ -38,17 +40,32 @@ export function CoinScreen({ sessionId, onFinish }: CoinScreenProps) {
     [sessionId],
   );
 
+  const handleCancel = async () => {
+    setCancelling(true);
+    try {
+      await declineClaim(sessionId);
+    } catch (err) {
+      console.error("declineClaim failed", err);
+    } finally {
+      setCancelling(false);
+      onFinish();
+    }
+  };
+
   const handleClaimSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!isValidIndianMobile(phone)) {
-      setError("Enter a valid 10-digit Indian mobile number.");
-      return;
-    }
-    setError(null);
+    const nextNameError = name.trim() ? null : "Name is required.";
+    const nextPhoneError = isValidIndianMobile(phone)
+      ? null
+      : "Enter a valid 10-digit Indian mobile number.";
+    setNameError(nextNameError);
+    setPhoneError(nextPhoneError);
+    if (nextNameError || nextPhoneError) return;
+
     setSubmitting(true);
     try {
       const { claimToken } = await registerClaim(sessionId, name.trim(), phone.replace(/\D/g, ""));
-      setClaimLink(`${window.location.origin}/claim/${claimToken}`);
+      setClaimLink(`${window.location.origin}/?token=${claimToken}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not submit. Please try again.");
     } finally {
@@ -104,22 +121,27 @@ export function CoinScreen({ sessionId, onFinish }: CoinScreenProps) {
                 </p>
 
                 {!claimLink ? (
-                  <form onSubmit={handleClaimSubmit} className="mt-10 w-full max-w-md">
+                  <form onSubmit={handleClaimSubmit} noValidate className="mt-10 w-full max-w-md">
                     <label
                       htmlFor="coin-name"
                       className="text-xs tracking-[0.25em] text-muted-foreground"
                     >
-                      NAME <span className="text-muted-foreground/60">(OPTIONAL)</span>
+                      NAME <span className="text-primary">*</span>
                     </label>
                     <input
                       id="coin-name"
                       value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      onChange={(e) => {
+                        setName(e.target.value);
+                        setNameError(null);
+                      }}
                       placeholder="Enter your name"
                       maxLength={60}
                       autoComplete="name"
+                      aria-invalid={Boolean(nameError)}
                       className="mt-3 w-full rounded-xl border border-input bg-card/60 px-5 py-4 text-base text-foreground outline-none backdrop-blur transition-all placeholder:text-muted-foreground/60 focus:border-primary focus:shadow-[0_0_0_4px_color-mix(in_oklab,var(--gold)_18%,transparent)]"
                     />
+                    {nameError && <p className="mt-2 text-sm text-destructive">{nameError}</p>}
 
                     <label
                       htmlFor="coin-phone"
@@ -137,23 +159,32 @@ export function CoinScreen({ sessionId, onFinish }: CoinScreenProps) {
                         autoComplete="tel"
                         onChange={(e) => {
                           setPhone(e.target.value.replace(/\D/g, "").slice(0, 10));
-                          setError(null);
+                          setPhoneError(null);
                         }}
                         placeholder="Enter your phone number"
                         className="w-full bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground/60"
-                        aria-invalid={Boolean(error)}
-                        required
+                        aria-invalid={Boolean(phoneError)}
                       />
                     </div>
-                    {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+                    {phoneError && <p className="mt-2 text-sm text-destructive">{phoneError}</p>}
 
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      className="btn-gold mt-8 w-full px-10 py-4 text-sm sm:text-base"
-                    >
-                      {submitting ? "Please wait…" : "Submit"}
-                    </button>
+                    <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                      <button
+                        type="button"
+                        onClick={handleCancel}
+                        disabled={submitting || cancelling}
+                        className="btn-ghost-gold flex-1 px-10 py-4 text-sm sm:text-base"
+                      >
+                        {cancelling ? "Please wait…" : "Cancel"}
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={submitting || cancelling}
+                        className="btn-gold flex-1 px-10 py-4 text-sm sm:text-base"
+                      >
+                        {submitting ? "Please wait…" : "Submit"}
+                      </button>
+                    </div>
                   </form>
                 ) : (
                   <div className="mt-10 w-full max-w-md">
