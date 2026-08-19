@@ -1,0 +1,211 @@
+import { useCallback, useState, type FormEvent } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { toast } from "sonner";
+import { AnimatedBackground } from "./AnimatedBackground";
+import { CoinFlip } from "./CoinFlip";
+import { GoldConfetti } from "./GoldConfetti";
+import { isValidIndianMobile } from "@/lib/utils";
+import { registerClaim, saveCoinResult, startCoin } from "@/lib/api";
+import { playSound } from "@/lib/sound";
+import type { CoinFace } from "@/types";
+
+interface CoinScreenProps {
+  sessionId: string;
+  onFinish: () => void;
+}
+
+export function CoinScreen({ sessionId, onFinish }: CoinScreenProps) {
+  const [face, setFace] = useState<CoinFace | null>(null);
+  const [claimLink, setClaimLink] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const handleFlipStart = useCallback(() => {
+    void startCoin(sessionId).catch((err) => console.error("startCoin failed", err));
+  }, [sessionId]);
+
+  const handleResult = useCallback(
+    (result: CoinFace) => {
+      setFace(result);
+      saveCoinResult(sessionId, result === "success" ? "win" : "lose")
+        .then(() => {
+          if (result === "success") playSound("win-celebration");
+        })
+        .catch((err) => console.error("saveCoinResult failed", err));
+    },
+    [sessionId],
+  );
+
+  const handleClaimSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!isValidIndianMobile(phone)) {
+      setError("Enter a valid 10-digit Indian mobile number.");
+      return;
+    }
+    setError(null);
+    setSubmitting(true);
+    try {
+      const { claimToken } = await registerClaim(sessionId, name.trim(), phone.replace(/\D/g, ""));
+      setClaimLink(`${window.location.origin}/claim/${claimToken}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not submit. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-5 py-20">
+      <AnimatedBackground particleCount={16} />
+
+      <AnimatePresence mode="wait">
+        {!face ? (
+          <motion.div
+            key="coin"
+            className="relative z-10 flex flex-col items-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.94, filter: "blur(10px)" }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <h1 className="display text-gold text-center text-[clamp(2rem,6vw,3.6rem)] leading-none">
+              One Last Chance
+            </h1>
+            <p className="mt-4 max-w-md text-center text-sm text-muted-foreground sm:text-base">
+              Flip the Bigg Boss coin and reveal your fate.
+            </p>
+            <div className="mt-16">
+              <CoinFlip
+                onResult={handleResult}
+                onFlipStart={handleFlipStart}
+                locked={face !== null}
+              />
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="result"
+            className="relative z-10 flex w-full flex-col items-center"
+            initial={{ opacity: 0, scale: 0.92, filter: "blur(14px)" }}
+            animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {face === "success" ? (
+              <>
+                <GoldConfetti count={70} mode="fall" />
+                <GoldConfetti count={44} mode="burst" />
+                <h1 className="display text-gold text-center text-[clamp(2.2rem,7vw,4.2rem)] leading-none">
+                  Congratulations!
+                </h1>
+                <p className="mt-4 max-w-md text-center text-sm text-muted-foreground sm:text-base">
+                  You've earned your Bigg Boss Entry Coupon.
+                </p>
+
+                {!claimLink ? (
+                  <form onSubmit={handleClaimSubmit} className="mt-10 w-full max-w-md">
+                    <label
+                      htmlFor="coin-name"
+                      className="text-xs tracking-[0.25em] text-muted-foreground"
+                    >
+                      NAME <span className="text-muted-foreground/60">(OPTIONAL)</span>
+                    </label>
+                    <input
+                      id="coin-name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Enter your name"
+                      maxLength={60}
+                      autoComplete="name"
+                      className="mt-3 w-full rounded-xl border border-input bg-card/60 px-5 py-4 text-base text-foreground outline-none backdrop-blur transition-all placeholder:text-muted-foreground/60 focus:border-primary focus:shadow-[0_0_0_4px_color-mix(in_oklab,var(--gold)_18%,transparent)]"
+                    />
+
+                    <label
+                      htmlFor="coin-phone"
+                      className="mt-6 block text-xs tracking-[0.25em] text-muted-foreground"
+                    >
+                      PHONE NUMBER <span className="text-primary">*</span>
+                    </label>
+                    <div className="mt-3 flex items-center gap-3 rounded-xl border border-input bg-card/60 px-5 py-4 backdrop-blur transition-all focus-within:border-primary focus-within:shadow-[0_0_0_4px_color-mix(in_oklab,var(--gold)_18%,transparent)]">
+                      <span className="text-base text-primary">+91</span>
+                      <input
+                        id="coin-phone"
+                        value={phone}
+                        inputMode="numeric"
+                        type="tel"
+                        autoComplete="tel"
+                        onChange={(e) => {
+                          setPhone(e.target.value.replace(/\D/g, "").slice(0, 10));
+                          setError(null);
+                        }}
+                        placeholder="Enter your phone number"
+                        className="w-full bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground/60"
+                        aria-invalid={Boolean(error)}
+                        required
+                      />
+                    </div>
+                    {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="btn-gold mt-8 w-full px-10 py-4 text-sm sm:text-base"
+                    >
+                      {submitting ? "Please wait…" : "Submit"}
+                    </button>
+                  </form>
+                ) : (
+                  <div className="mt-10 w-full max-w-md">
+                    <p className="text-xs tracking-[0.3em] text-muted-foreground">
+                      YOUR COUPON LINK
+                    </p>
+                    <p className="mt-3 break-all rounded-xl border border-primary/40 bg-card/60 px-5 py-4 text-sm text-primary backdrop-blur">
+                      {claimLink}
+                    </p>
+                    <p className="mt-4 text-center text-xs text-muted-foreground sm:text-sm">
+                      Open this link, accept the terms and your coupon code will show up.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={onFinish}
+                      className="btn-gold mt-8 w-full px-10 py-4 text-sm sm:text-base"
+                    >
+                      Close
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <motion.div
+                  className="pointer-events-none absolute inset-0 -z-10"
+                  style={{
+                    background:
+                      "radial-gradient(circle at 50% 40%, color-mix(in oklab, var(--gold) 16%, transparent), transparent 65%)",
+                  }}
+                  animate={{ opacity: [0.4, 0.8, 0.4] }}
+                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                />
+                <h1 className="display text-gold text-center text-[clamp(1.9rem,6vw,3.4rem)] leading-none">
+                  Better Luck Next Time
+                </h1>
+                <p className="mt-5 max-w-lg text-center text-sm text-muted-foreground sm:text-base">
+                  Thank you for taking on the Bigg Boss Common Man Challenge.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={onFinish}
+                  className="btn-gold mt-12 px-14 py-4 text-sm sm:text-base"
+                >
+                  OK
+                </button>
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </section>
+  );
+}
