@@ -1,5 +1,5 @@
-const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "http://localhost:3001";
-// const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "http://192.168.1.64:3001";
+const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "https://backend-bq11.onrender.com";
+
 
 export class ApiError extends Error {
   constructor(message: string) {
