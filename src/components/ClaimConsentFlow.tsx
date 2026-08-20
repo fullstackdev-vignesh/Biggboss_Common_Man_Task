@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, Circle, MapPin, Phone as PhoneIcon, User as UserIcon } from "lucide-react";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
@@ -24,7 +24,8 @@ type LoadState =
   | { status: "expired"; name: string | null }
   | { status: "ready"; info: ClaimInfo };
 
-type Outcome = { kind: "accepted"; couponCode: string } | { kind: "declined" };
+type Outcome =
+  { kind: "accepted"; couponCode: string; at: string } | { kind: "declined"; at: string };
 
 type LocationStatus = "requesting" | "granted" | "denied" | "unavailable";
 
@@ -87,9 +88,20 @@ function useDetailsAddress(lat: number | null, lng: number | null) {
   return address;
 }
 
-function formatTime(iso: string | null): string {
+function formatStamp(iso: string | null | undefined): string {
   if (!iso) return "";
-  return new Date(iso).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+  const date = new Date(iso).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+  const time = new Date(iso).toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
+  return `${date}\n${time}`;
 }
 
 export function ClaimConsentFlow({ token }: { token: string }) {
@@ -113,8 +125,15 @@ export function ClaimConsentFlow({ token }: { token: string }) {
           return;
         }
         setState({ status: "ready", info });
-        if (info.claimAccepted) setOutcome({ kind: "accepted", couponCode: info.couponCode ?? "" });
-        else if (info.claimLinkDeclined) setOutcome({ kind: "declined" });
+        if (info.claimAccepted) {
+          setOutcome({
+            kind: "accepted",
+            couponCode: info.couponCode ?? "",
+            at: info.claimAcceptedAt ?? "",
+          });
+        } else if (info.claimLinkDeclined) {
+          setOutcome({ kind: "declined", at: info.claimLinkDeclinedAt ?? "" });
+        }
       })
       .catch((err) => {
         if (cancelled) return;
@@ -143,7 +162,11 @@ export function ClaimConsentFlow({ token }: { token: string }) {
     setSubmitting(true);
     try {
       const result = await acceptClaim(token, location ?? undefined);
-      setOutcome({ kind: "accepted", couponCode: result.couponCode });
+      setOutcome({
+        kind: "accepted",
+        couponCode: result.couponCode,
+        at: new Date().toISOString(),
+      });
     } catch (err) {
       handleFailure(err);
     } finally {
@@ -155,7 +178,7 @@ export function ClaimConsentFlow({ token }: { token: string }) {
     setSubmitting(true);
     try {
       await declineClaimLink(token, location ?? undefined);
-      setOutcome({ kind: "declined" });
+      setOutcome({ kind: "declined", at: new Date().toISOString() });
     } catch (err) {
       handleFailure(err);
     } finally {
@@ -283,30 +306,28 @@ function buildJourneySteps(info: ClaimInfo, outcome: Outcome | null): JourneySte
   return [
     {
       label: "Spin Wheel",
-      detail: info.wheelSpinCompletedAt ? `Completed ${formatTime(info.wheelSpinCompletedAt)}` : "",
+      detail: info.wheelSpinCompletedAt ? formatStamp(info.wheelSpinCompletedAt) : "",
       status: info.wheelSpinCompletedAt ? "done" : "upcoming",
     },
     {
       label: `Task Performance${info.wheelCategory ? ` (${info.wheelCategory})` : ""}`,
-      detail: info.taskCompletedAt ? `Completed ${formatTime(info.taskCompletedAt)}` : "",
+      detail: info.taskCompletedAt ? formatStamp(info.taskCompletedAt) : "",
       status: info.taskCompletedAt ? "done" : "upcoming",
     },
     {
       label: "Flip Coin",
-      detail: info.coinFlipCompletedAt ? `Coupon Won ${formatTime(info.coinFlipCompletedAt)}` : "",
+      detail: info.coinFlipCompletedAt ? formatStamp(info.coinFlipCompletedAt) : "",
       status: info.coinFlipCompletedAt ? "done" : "upcoming",
     },
     {
       label: "Details Submitted",
-      detail: info.detailsSubmittedAt ? `Name & Phone ${formatTime(info.detailsSubmittedAt)}` : "",
+      detail: info.detailsSubmittedAt ? formatStamp(info.detailsSubmittedAt) : "",
       status: info.detailsSubmittedAt ? "done" : "upcoming",
     },
     {
       label: "Consent Letter",
       detail: consentDone
-        ? outcome?.kind === "accepted"
-          ? "Accepted"
-          : "Declined"
+        ? `${outcome?.kind === "accepted" ? "Accepted" : "Declined"}\n${formatStamp(outcome?.at)}`
         : "Please review & accept",
       status: consentDone ? "done" : "current",
     },
@@ -314,7 +335,7 @@ function buildJourneySteps(info: ClaimInfo, outcome: Outcome | null): JourneySte
       label: "Coupon Code",
       detail:
         outcome?.kind === "accepted"
-          ? "Ready"
+          ? `Ready\n${formatStamp(outcome.at)}`
           : outcome?.kind === "declined"
             ? "Not issued"
             : "Will be shown after acceptance",
@@ -359,7 +380,11 @@ function JourneyList({ info, outcome }: { info: ClaimInfo; outcome: Outcome | nu
               >
                 {step.label}
               </p>
-              {step.detail && <p className="mt-0.5 text-xs text-muted-foreground">{step.detail}</p>}
+              {step.detail && (
+                <p className="mt-0.5 whitespace-pre-line text-xs text-muted-foreground">
+                  {step.detail}
+                </p>
+              )}
             </div>
           </li>
         ))}
@@ -530,8 +555,8 @@ function DeclinedPanel() {
         Coupon Declined
       </h1>
       <p className="mt-4 text-sm text-muted-foreground sm:text-base">
-        You've chosen not to proceed with the Confession Room. Your Bigg Boss Entry Coupon has been
-        declined.
+        You've chosen not to enter the Confession Room. Your Common Man Challenge Entry Coupon has
+        been declined
       </p>
     </motion.div>
   );
@@ -554,8 +579,9 @@ function ExpiredCard({ name }: { name: string | null }) {
         Your Link Has Expired
       </h1>
       <p className="mt-4 text-sm text-muted-foreground sm:text-base">
-        {name ? `${name}, this` : "This"} claim link was valid for 30 minutes and has expired
-        because it wasn't accepted in time.
+        {/* {name ? `${name}, this` : "This"} claim link was valid for 30 minutes and has expired
+        because it wasn't accepted in time. */}
+        The 30-minute validity period has ended, and the claim was not accepted in time.
       </p>
     </motion.div>
   );

@@ -35,7 +35,7 @@ const EXCEL_HEADERS = [
   "Participant ID",
   "Name",
   "Phone",
-  "Registered At",
+  "Participant Started At",
   "Wheel Category",
   "Wheel Spin At",
   "Task Status",
@@ -159,7 +159,7 @@ export async function downloadExcel(rows: ParticipantJourney[]) {
 const PDF_HEADERS = [
   "S.No",
   "Participant",
-  "Registered",
+  "Participant Started",
   "Wheel",
   "Task Status",
   "Coin Result",

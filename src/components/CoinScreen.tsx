@@ -145,7 +145,7 @@ export function CoinScreen({ sessionId, onFinish, onFormVisibleChange }: CoinScr
                   Congratulations!
                 </h1>
                 <p className="mt-4 max-w-md text-center text-sm text-muted-foreground sm:text-base">
-                  You've earned your Bigg Boss Entry Coupon.
+                  Bigg Boss Common Man Task Entry Coupon.
                 </p>
 
                 {!claimLink ? (
@@ -223,7 +223,7 @@ export function CoinScreen({ sessionId, onFinish, onFormVisibleChange }: CoinScr
                       {claimLink}
                     </p>
                     <p className="mt-4 text-center text-xs text-muted-foreground sm:text-sm">
-                      Open this link, accept the terms and your coupon code will show up.
+                      Open the link and accept the terms and conditions to reveal your coupon code.
                     </p>
                     <button
                       type="button"

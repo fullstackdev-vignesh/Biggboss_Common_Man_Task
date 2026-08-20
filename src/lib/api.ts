@@ -134,7 +134,9 @@ export interface ClaimInfo {
   detailsLocationLat: number | null;
   detailsLocationLng: number | null;
   claimAccepted: boolean;
+  claimAcceptedAt: string | null;
   claimLinkDeclined: boolean;
+  claimLinkDeclinedAt: string | null;
   couponCode: string | null;
 }
 

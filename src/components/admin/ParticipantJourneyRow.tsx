@@ -304,7 +304,7 @@ export function ParticipantJourneyCard({
       </div>
       <div className="grid grid-cols-2 gap-3 text-sm">
         <div>
-          <p className="text-xs uppercase text-muted-foreground">Registered</p>
+          <p className="text-xs uppercase text-muted-foreground">Participant Started</p>
           <p>{formatTime(p.registeredAt)}</p>
         </div>
         <div>

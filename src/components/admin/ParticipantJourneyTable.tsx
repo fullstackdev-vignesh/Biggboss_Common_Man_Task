@@ -31,7 +31,7 @@ const COLUMNS: {
 }[] = [
   { label: "S.No", icon: Hash },
   { label: "Participant", icon: User },
-  { label: "Registered", sort: "registeredAt", icon: Calendar },
+  { label: "Participant Started", sort: "registeredAt", icon: Calendar },
   { label: "Wheel", sort: "wheelSpinCompletedAt", icon: RotateCw },
   // { label: "Task", icon: ListTodo }, // hidden for now — future use
   { label: "Task Status", sort: "taskStatus", icon: ShieldCheck },
