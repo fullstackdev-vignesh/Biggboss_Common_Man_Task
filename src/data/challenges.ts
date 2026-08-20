@@ -42,7 +42,7 @@ export const challengeCategories: ChallengeCategory[] = [
     label: "CITY",
     tasks: [
       "Complete: “My city is the best because…”",
-      "Sell your hometown to Bigg Boss in one line.",
+      "Tell your hometown to Bigg Boss in one line.",
       "Name one thing Bigg Boss must experience in your city.",
     ],
   },
