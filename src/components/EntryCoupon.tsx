@@ -31,7 +31,7 @@ export function EntryCoupon({ participant, code }: EntryCouponProps) {
 
         <div className="flex items-center justify-between gap-4">
           <img
-            src="/images/bb-eye.png"
+            src={import.meta.env.BASE_URL + "images/bb-eye.png"}
             alt="Bigg Boss"
             className="h-9 w-auto object-contain sm:h-11"
           />

@@ -61,7 +61,7 @@ export function CoinFlip({ onResult, onFlipStart, locked }: CoinFlipProps) {
             }}
           >
             <img
-              src="/images/bb-eye.png"
+              src={import.meta.env.BASE_URL + "images/bb-eye.png"}
               alt="Bigg Boss"
               className="w-[62%] object-contain opacity-90 mix-blend-luminosity"
             />

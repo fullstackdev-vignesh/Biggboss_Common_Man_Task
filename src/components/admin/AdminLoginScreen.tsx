@@ -37,7 +37,7 @@ export function AdminLoginScreen({ onSuccess }: { onSuccess: () => void }) {
         transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
       >
         <motion.img
-          src="/images/login-screen.png"
+          src={import.meta.env.BASE_URL + "images/login-screen.png"}
           alt="Bigg Boss Season 10 key art"
           draggable={false}
           className="size-full select-none object-cover object-center"

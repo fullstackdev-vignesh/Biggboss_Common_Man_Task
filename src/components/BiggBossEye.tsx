@@ -52,7 +52,7 @@ export function BiggBossEye({
         transition={{ duration: pulse ? 1.2 : 5, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.img
-        src="/images/bb-eye.png"
+        src={import.meta.env.BASE_URL + "images/bb-eye.png"}
         alt="Bigg Boss eye"
         draggable={false}
         className="relative w-full select-none object-contain drop-shadow-[0_10px_30px_oklch(0_0_0/0.7)]"

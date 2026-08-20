@@ -51,7 +51,7 @@ export function SplashScreen({
         transition={{ duration: 1.5, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
       >
         <img
-          src="/images/bb-logo.png"
+          src={import.meta.env.BASE_URL + "images/bb-logo.png"}
           alt="Bigg Boss Season 10"
           draggable={false}
           className="w-full select-none object-contain drop-shadow-[0_30px_70px_oklch(0_0_0/0.75)]"
