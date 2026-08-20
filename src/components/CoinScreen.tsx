@@ -195,6 +195,10 @@ export function CoinScreen({ sessionId, onFinish, onFormVisibleChange }: CoinScr
                       />
                     </div>
                     {phoneError && <p className="mt-2 text-sm text-destructive">{phoneError}</p>}
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      We&apos;ll send a consent letter to you for approval. Once approved, your
+                      entry coupon will be displayed.
+                    </p>
 
                     <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                       <button
