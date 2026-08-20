@@ -148,6 +148,10 @@ export function computeStats(rows: ParticipantJourney[]) {
       ),
     ).length,
     betterLuck: rows.filter((p) => p.coinResult === "BETTER_LUCK_NEXT_TIME").length,
+    consentLinks: rows.filter((p) => !!p.claimToken).length,
+    consentAccepted: rows.filter((p) => p.coinResult === "COUPON").length,
+    consentDeclined: rows.filter((p) => p.coinResult === "COUPON_DECLINED").length,
+    couponClaim: rows.filter((p) => !!p.couponCode).length,
   };
 }
 

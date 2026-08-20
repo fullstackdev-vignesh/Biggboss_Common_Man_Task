@@ -44,7 +44,6 @@ async function reverseGeocode(location: ClaimLocation): Promise<string | null> {
 function useAutoLocation() {
   const [status, setStatus] = useState<LocationStatus>("requesting");
   const [location, setLocation] = useState<ClaimLocation | null>(null);
-  const [address, setAddress] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
@@ -53,17 +52,39 @@ function useAutoLocation() {
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        setLocation(loc);
+        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setStatus("granted");
-        void reverseGeocode(loc).then(setAddress);
       },
       () => setStatus("denied"),
-      { timeout: 10000 },
+      { enableHighAccuracy: true, timeout: 15000 },
     );
   }, []);
 
-  return { status, location, address };
+  return { status, location };
+}
+
+/** Reverse-geocodes the location captured when the coin-win form was
+ * submitted (`detailsLocationLat/Lng`) — shown as the claim page's LOCATION
+ * field so it reflects where the form was filled in, not where the link
+ * happens to be opened. */
+function useDetailsAddress(lat: number | null, lng: number | null) {
+  const [address, setAddress] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (lat === null || lng === null) {
+      setAddress(null);
+      return;
+    }
+    let cancelled = false;
+    void reverseGeocode({ lat, lng }).then((result) => {
+      if (!cancelled) setAddress(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [lat, lng]);
+
+  return address;
 }
 
 function formatTime(iso: string | null): string {
@@ -76,8 +97,11 @@ export function ClaimConsentFlow({ token }: { token: string }) {
   const [accepted, setAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
-  const { status: locationStatus, location, address } = useAutoLocation();
-  const today = useRef(new Date().toLocaleDateString("en-IN")).current;
+  const { location } = useAutoLocation();
+  const detailsAddress = useDetailsAddress(
+    state.status === "ready" ? state.info.detailsLocationLat : null,
+    state.status === "ready" ? state.info.detailsLocationLng : null,
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -207,10 +231,7 @@ export function ClaimConsentFlow({ token }: { token: string }) {
                 {!outcome && (
                   <ConsentPanel
                     info={state.info}
-                    today={today}
-                    locationStatus={locationStatus}
-                    location={location}
-                    address={address}
+                    detailsAddress={detailsAddress}
                     accepted={accepted}
                     onAcceptedChange={setAccepted}
                     onAccept={handleAccept}
@@ -369,10 +390,7 @@ function AutoField({
 
 function ConsentPanel({
   info,
-  today,
-  locationStatus,
-  location,
-  address,
+  detailsAddress,
   accepted,
   onAcceptedChange,
   onAccept,
@@ -380,24 +398,22 @@ function ConsentPanel({
   submitting,
 }: {
   info: ClaimInfo;
-  today: string;
-  locationStatus: LocationStatus;
-  location: ClaimLocation | null;
-  address: string | null;
+  detailsAddress: string | null;
   accepted: boolean;
   onAcceptedChange: (accepted: boolean) => void;
   onAccept: () => void;
   onDecline: () => void;
   submitting: boolean;
 }) {
+  const submittedDate = info.detailsSubmittedAt
+    ? new Date(info.detailsSubmittedAt).toLocaleDateString("en-IN")
+    : "—";
+
   const locationText =
-    locationStatus === "granted" && location
-      ? (address ?? `${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`)
-      : locationStatus === "denied"
-        ? "Permission denied"
-        : locationStatus === "unavailable"
-          ? "Not available"
-          : "Requesting…";
+    info.detailsLocationLat !== null && info.detailsLocationLng !== null
+      ? (detailsAddress ??
+        `${info.detailsLocationLat.toFixed(5)}, ${info.detailsLocationLng.toFixed(5)}`)
+      : "Not captured";
 
   return (
     <div>
@@ -414,7 +430,7 @@ function ConsentPanel({
           value={info.phone ? formatPhone(info.phone) : "—"}
         />
         <AutoField icon={UserIcon} label="PARTICIPANT ID" value={info.participantId} />
-        <AutoField icon={UserIcon} label="DATE" value={today} />
+        <AutoField icon={UserIcon} label="DATE" value={submittedDate} />
         <div className="sm:col-span-2">
           <AutoField icon={MapPin} label="LOCATION" value={locationText} />
         </div>

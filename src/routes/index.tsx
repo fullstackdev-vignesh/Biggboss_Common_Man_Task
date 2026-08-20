@@ -48,6 +48,7 @@ function Experience() {
   const { stage, sessionId, spinResult, entering, enterTask, setSpinResult, proceedToCoin, reset } =
     useExperience();
   const [failing, setFailing] = useState(false);
+  const [hideExitOnCoinForm, setHideExitOnCoinForm] = useState(false);
 
   const handleFailed = () => {
     setFailing(true);
@@ -59,7 +60,7 @@ function Experience() {
 
   return (
     <main className="relative min-h-screen w-full overflow-x-hidden bg-background">
-      {(stage === "wheel" || stage === "coin") && (
+      {(stage === "wheel" || (stage === "coin" && !hideExitOnCoinForm)) && (
         <button
           type="button"
           onClick={reset}
@@ -91,7 +92,11 @@ function Experience() {
         )}
         {stage === "coin" && sessionId && spinResult && (
           <PageTransition key="coin">
-            <CoinScreen sessionId={sessionId} onFinish={reset} />
+            <CoinScreen
+              sessionId={sessionId}
+              onFinish={reset}
+              onFormVisibleChange={setHideExitOnCoinForm}
+            />
           </PageTransition>
         )}
       </AnimatePresence>

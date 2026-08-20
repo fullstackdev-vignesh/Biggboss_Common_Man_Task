@@ -11,7 +11,7 @@ import { ReportStats } from "@/components/admin/ReportStats";
 import { ReportToolbar } from "@/components/admin/ReportToolbar";
 import { adminLogout, isAdminAuthed } from "@/hooks/useAdminAuth";
 import { fetchJourneys } from "@/lib/admin/api";
-import { downloadCsv } from "@/lib/admin/report-export";
+import { downloadExcel, downloadPdf } from "@/lib/admin/report-export";
 import {
   applyFilters,
   computeStats,
@@ -111,7 +111,8 @@ function AdminReportsPage() {
       <div className="mx-auto flex max-w-[1600px] flex-col gap-5">
         <AdminHeader
           onRefresh={() => void query.refetch()}
-          onExport={() => downloadCsv(sorted)}
+          onExportExcel={() => void downloadExcel(sorted)}
+          onExportPdf={() => void downloadPdf(sorted)}
           onLogout={handleLogout}
           lastUpdated={query.dataUpdatedAt ? new Date(query.dataUpdatedAt) : null}
           refreshing={query.isFetching}
@@ -134,7 +135,7 @@ function AdminReportsPage() {
           onSearchInput={setSearchInput}
           onChange={(patch) => setFilters((f) => ({ ...f, ...patch }))}
           onReset={handleReset}
-          onExport={() => downloadCsv(sorted)}
+          onExport={() => void downloadExcel(sorted)}
         />
 
         <p className="text-sm text-muted-foreground">

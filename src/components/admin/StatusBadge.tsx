@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -15,20 +16,23 @@ const TONE_CLASS: Record<Tone, string> = {
 export function StatusBadge({
   children,
   tone = "muted",
+  icon: Icon,
   className,
 }: {
   children: ReactNode;
   tone?: Tone;
+  icon?: LucideIcon;
   className?: string;
 }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider",
+        "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider",
         TONE_CLASS[tone],
         className,
       )}
     >
+      {Icon && <Icon className="size-3" />}
       {children}
     </span>
   );

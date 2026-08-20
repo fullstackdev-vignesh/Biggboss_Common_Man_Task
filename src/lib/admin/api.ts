@@ -51,9 +51,13 @@ function toJourney(user: BiggUser): ParticipantJourney {
     coinFlipCompletedAt: user.coinFlipCompletedAt ?? null,
     coinResult: toCoinResult(user),
     couponCode: user.claimAccepted ? (user.couponCode ?? null) : null,
+    claimToken: user.claimToken ?? null,
+    detailsSubmittedAt: user.claimTokenIssuedAt ?? null,
     claimAccepted: user.claimAccepted ?? false,
+    claimAcceptedAt: user.claimAcceptedAt ?? null,
     claimDeclined: user.claimDeclined ?? false,
     claimLinkDeclined: user.claimLinkDeclined ?? false,
+    claimLinkDeclinedAt: user.claimLinkDeclinedAt ?? null,
     completedAt: user.completedAt ?? null,
   };
 }

@@ -1,4 +1,4 @@
-import { useCallback, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { AnimatedBackground } from "./AnimatedBackground";
@@ -12,9 +12,10 @@ import type { CoinFace } from "@/types";
 interface CoinScreenProps {
   sessionId: string;
   onFinish: () => void;
+  onFormVisibleChange?: (visible: boolean) => void;
 }
 
-export function CoinScreen({ sessionId, onFinish }: CoinScreenProps) {
+export function CoinScreen({ sessionId, onFinish, onFormVisibleChange }: CoinScreenProps) {
   const [face, setFace] = useState<CoinFace | null>(null);
   const [claimLink, setClaimLink] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -23,6 +24,27 @@ export function CoinScreen({ sessionId, onFinish }: CoinScreenProps) {
   const [phone, setPhone] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [locationLat, setLocationLat] = useState<number | undefined>(undefined);
+  const [locationLng, setLocationLng] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    onFormVisibleChange?.(face === "success" && !claimLink);
+  }, [face, claimLink, onFormVisibleChange]);
+
+  // Trigger the location permission prompt as soon as the Congratulations
+  // screen appears, so GPS has time to get a fix before the user submits.
+  useEffect(() => {
+    if (face !== "success") return;
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocationLat(pos.coords.latitude);
+        setLocationLng(pos.coords.longitude);
+      },
+      () => {},
+      { enableHighAccuracy: true, timeout: 15000 },
+    );
+  }, [face]);
 
   const handleFlipStart = useCallback(() => {
     void startCoin(sessionId).catch((err) => console.error("startCoin failed", err));
@@ -64,7 +86,13 @@ export function CoinScreen({ sessionId, onFinish }: CoinScreenProps) {
 
     setSubmitting(true);
     try {
-      const { claimToken } = await registerClaim(sessionId, name.trim(), phone.replace(/\D/g, ""));
+      const { claimToken } = await registerClaim(
+        sessionId,
+        name.trim(),
+        phone.replace(/\D/g, ""),
+        locationLat,
+        locationLng,
+      );
       setClaimLink(`${window.location.origin}/?token=${claimToken}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not submit. Please try again.");

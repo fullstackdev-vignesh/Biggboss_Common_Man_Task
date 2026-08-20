@@ -39,9 +39,13 @@ export interface BiggUser {
   coinFlipStartedAt?: string | null;
   coinFlipCompletedAt?: string | null;
   couponCode?: string | null;
+  claimToken?: string | null;
+  claimTokenIssuedAt?: string | null;
   claimAccepted?: boolean;
+  claimAcceptedAt?: string | null;
   claimDeclined?: boolean;
   claimLinkDeclined?: boolean;
+  claimLinkDeclinedAt?: string | null;
   completedAt?: string | null;
   createdAt: string;
 }
@@ -89,11 +93,18 @@ export function saveCoinResult(sessionId: string, result: "win" | "lose") {
   });
 }
 
-/** Coin-win "Name + Phone" form submit — mints the claim link token. */
-export function registerClaim(sessionId: string, name: string, phone: string) {
+/** Coin-win "Name + Phone" form submit — mints the claim link token.
+ * `lat`/`lng` are the participant's location at the moment of this submit. */
+export function registerClaim(
+  sessionId: string,
+  name: string,
+  phone: string,
+  lat?: number,
+  lng?: number,
+) {
   return request<{ ok: true; claimToken: string }>("/api/claim/register", {
     method: "POST",
-    body: JSON.stringify({ sessionId, name, phone }),
+    body: JSON.stringify({ sessionId, name, phone, lat, lng }),
   });
 }
 
@@ -120,6 +131,8 @@ export interface ClaimInfo {
   taskCompletedAt: string | null;
   coinFlipCompletedAt: string | null;
   detailsSubmittedAt: string | null;
+  detailsLocationLat: number | null;
+  detailsLocationLng: number | null;
   claimAccepted: boolean;
   claimLinkDeclined: boolean;
   couponCode: string | null;

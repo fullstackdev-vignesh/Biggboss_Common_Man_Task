@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Gauge, Sliders, TrendingDown, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -40,34 +41,67 @@ export function DailyLimitPanel() {
 
   const used = query.data?.usedCount ?? 0;
   const limit = query.data?.limit ?? 0;
-  const reached = query.data?.configured && used >= limit;
+  const remaining = query.data?.configured ? Math.max(limit - used, 0) : 0;
 
   return (
-    <div className="glass-panel flex flex-col gap-3 rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
-          Participant Limit{" "}
-          <span className="normal-case text-muted-foreground/70">(applies every day)</span>
-        </p>
-        {query.isLoading ? (
-          <div className="shimmer mt-2 h-6 w-40 rounded" />
-        ) : (
-          <p className="display-font mt-1 text-xl gold-text">
-            {query.data?.configured ? `${used} / ${limit} today` : "Not configured yet"}
-            {reached && (
-              <span className="ml-2 text-xs font-normal text-destructive">Limit reached</span>
+    <div className="glass-panel flex flex-col gap-4 rounded-2xl p-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="grid flex-1 grid-cols-3 gap-3">
+        <div className="flex items-start gap-2">
+          <Gauge className="mt-0.5 size-5 shrink-0 text-primary" />
+          <div>
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+              Today Limit
+            </p>
+            {query.isLoading ? (
+              <div className="shimmer mt-2 h-6 w-16 rounded" />
+            ) : (
+              <p className="display-font mt-1 text-2xl gold-text">
+                {query.data?.configured ? limit : "—"}
+              </p>
             )}
-          </p>
-        )}
+          </div>
+        </div>
+        <div className="flex items-start gap-2">
+          <Users className="mt-0.5 size-5 shrink-0 text-amber" />
+          <div>
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Used Today</p>
+            {query.isLoading ? (
+              <div className="shimmer mt-2 h-6 w-16 rounded" />
+            ) : (
+              <p className="display-font mt-1 text-2xl gold-text">
+                {used}
+                {query.data?.configured ? ` / ${limit}` : ""}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-start gap-2">
+          <TrendingDown className="mt-0.5 size-5 shrink-0 text-success" />
+          <div>
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Remaining</p>
+            {query.isLoading ? (
+              <div className="shimmer mt-2 h-6 w-16 rounded" />
+            ) : (
+              <p className="display-font mt-1 text-2xl gold-text">
+                {query.data?.configured ? remaining : "—"}
+              </p>
+            )}
+          </div>
+        </div>
       </div>
+
       <div className="flex items-center gap-2">
+        <Sliders className="size-4 text-muted-foreground" />
+        <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+          Set Daily Limit
+        </p>
         <Input
           type="number"
           min={1}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="e.g. 100"
-          className="w-[140px]"
+          className="w-[110px]"
         />
         <Button size="sm" onClick={() => void handleSave()} disabled={saving}>
           {saving ? "Saving…" : "Save Limit"}

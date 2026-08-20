@@ -1,4 +1,4 @@
-import { RefreshCw, Download, LogOut } from "lucide-react";
+import { RefreshCw, FileSpreadsheet, FileText, LogOut } from "lucide-react";
 
 import { ASSETS } from "@/lib/assets";
 import { Button } from "@/components/ui/button";
@@ -6,13 +6,15 @@ import { formatDate, formatTime } from "@/lib/admin/format";
 
 export function AdminHeader({
   onRefresh,
-  onExport,
+  onExportExcel,
+  onExportPdf,
   onLogout,
   lastUpdated,
   refreshing,
 }: {
   onRefresh: () => void;
-  onExport: () => void;
+  onExportExcel: () => void;
+  onExportPdf: () => void;
   onLogout: () => void;
   lastUpdated: Date | null;
   refreshing: boolean;
@@ -39,8 +41,11 @@ export function AdminHeader({
         <Button variant="outline" size="sm" onClick={onRefresh} disabled={refreshing}>
           <RefreshCw className={refreshing ? "animate-spin" : ""} /> Refresh
         </Button>
-        <Button size="sm" onClick={onExport}>
-          <Download /> Export
+        <Button size="sm" onClick={onExportExcel}>
+          <FileSpreadsheet /> Excel
+        </Button>
+        <Button size="sm" onClick={onExportPdf}>
+          <FileText /> PDF
         </Button>
         <Button variant="ghost" size="sm" onClick={onLogout}>
           <LogOut /> Logout

@@ -213,7 +213,7 @@ export function ReportToolbar({
           <RotateCcw /> Reset
         </Button>
         <Button size="sm" onClick={onExport}>
-          <FileDown /> Export CSV
+          <FileDown /> Export Excel
         </Button>
       </div>
     </div>
