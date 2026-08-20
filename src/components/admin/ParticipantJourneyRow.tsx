@@ -1,4 +1,15 @@
-import { Check, Copy, PanelRightOpen } from "lucide-react";
+import {
+  Check,
+  CheckCircle2,
+  Clock,
+  Copy,
+  Link2,
+  PanelRightOpen,
+  Sparkles,
+  Target,
+  TimerOff,
+  XCircle,
+} from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -12,22 +23,72 @@ import { formatDate, formatTime } from "@/lib/admin/format";
 import { formatPhone } from "@/lib/utils";
 import { FINAL_STATUS_LABEL, finalStatusOf, type ParticipantJourney } from "@/types/admin";
 
-function CouponCode({ code }: { code: string }) {
+function CopyChip({
+  label,
+  value,
+  icon: Icon = Copy,
+}: {
+  label: string;
+  value: string;
+  icon?: typeof Copy;
+}) {
   const [copied, setCopied] = useState(false);
   return (
     <button
       type="button"
       onClick={() => {
-        void navigator.clipboard?.writeText(code);
+        void navigator.clipboard?.writeText(value);
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
       }}
       className="inline-flex items-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-2 py-1 font-mono text-xs tracking-widest text-primary"
     >
-      {code}
-      {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
+      {label}
+      {copied ? <Check className="size-3" /> : <Icon className="size-3" />}
     </button>
   );
+}
+
+const CLAIM_WINDOW_MS = 30 * 60 * 1000;
+
+function isClaimExpired(p: ParticipantJourney): boolean {
+  if (p.claimAccepted || p.claimLinkDeclined) return false;
+  if (!p.detailsSubmittedAt) return false;
+  return Date.now() - new Date(p.detailsSubmittedAt).getTime() > CLAIM_WINDOW_MS;
+}
+
+function claimExpiresAt(p: ParticipantJourney): string | null {
+  if (!p.detailsSubmittedAt) return null;
+  return new Date(new Date(p.detailsSubmittedAt).getTime() + CLAIM_WINDOW_MS).toISOString();
+}
+
+function ConsentAcknowledgement({ p }: { p: ParticipantJourney }) {
+  if (p.coinResult === "COUPON")
+    return (
+      <StatusBadge tone="success" icon={CheckCircle2}>
+        Accepted
+      </StatusBadge>
+    );
+  if (p.coinResult === "COUPON_DECLINED")
+    return (
+      <StatusBadge tone="danger" icon={XCircle}>
+        Declined
+      </StatusBadge>
+    );
+  if (p.coinResult === "COUPON_PENDING") {
+    if (isClaimExpired(p))
+      return (
+        <StatusBadge tone="danger" icon={TimerOff}>
+          Link Expired
+        </StatusBadge>
+      );
+    return (
+      <StatusBadge tone="pending" icon={Clock}>
+        Pending
+      </StatusBadge>
+    );
+  }
+  return <span className="text-muted-foreground">N/A</span>;
 }
 
 export function ParticipantJourneyRow({
@@ -57,7 +118,9 @@ export function ParticipantJourneyRow({
       <td className="px-4 py-4">
         {p.wheelCategory ? (
           <>
-            <StatusBadge tone="gold">{p.wheelCategory}</StatusBadge>
+            <StatusBadge tone="gold" icon={Target}>
+              {p.wheelCategory}
+            </StatusBadge>
             <p className="mt-1 text-xs text-muted-foreground">
               Spun at {formatTime(p.wheelSpinStartedAt ?? p.wheelSpinCompletedAt)}
             </p>
@@ -66,6 +129,7 @@ export function ParticipantJourneyRow({
           <span className="text-sm text-muted-foreground">—</span>
         )}
       </td>
+      {/* Task column hidden for now — future use
       <td className="max-w-[260px] px-4 py-4 text-sm leading-snug" title={p.wheelTask ?? ""}>
         {p.wheelTask ? (
           <span className="line-clamp-3 block">{p.wheelTask}</span>
@@ -73,8 +137,20 @@ export function ParticipantJourneyRow({
           <span className="text-muted-foreground">—</span>
         )}
       </td>
+      */}
       <td className="px-4 py-4">
-        <StatusBadge tone={taskStatusTone(p.taskStatus)}>{p.taskStatus ?? "PENDING"}</StatusBadge>
+        <StatusBadge
+          tone={taskStatusTone(p.taskStatus)}
+          icon={
+            p.taskStatus === "COMPLETED"
+              ? CheckCircle2
+              : p.taskStatus === "FAILED"
+                ? XCircle
+                : Clock
+          }
+        >
+          {p.taskStatus ?? "PENDING"}
+        </StatusBadge>
         {(p.taskCompletedAt || p.taskFailedAt) && (
           <p className="mt-1 text-xs text-muted-foreground">
             {formatTime(p.taskCompletedAt ?? p.taskFailedAt)}
@@ -96,35 +172,84 @@ export function ParticipantJourneyRow({
         )}
       </td>
       <td className="px-4 py-4">
-        <StatusBadge tone={coinResultTone(coinResult)}>{COIN_RESULT_LABEL[coinResult]}</StatusBadge>
+        <StatusBadge tone={coinResultTone(coinResult)} icon={coinResultIcon(coinResult)}>
+          {COIN_RESULT_LABEL[coinResult]}
+        </StatusBadge>
         {p.coinFlipCompletedAt && (
           <p className="mt-1 text-xs text-muted-foreground">{formatTime(p.coinFlipCompletedAt)}</p>
         )}
       </td>
       <td className="px-4 py-4">
-        {p.couponCode ? (
-          <CouponCode code={p.couponCode} />
-        ) : coinResult === "COUPON_PENDING" ? (
-          <span className="text-xs text-amber">Awaiting claim link</span>
+        {p.claimToken ? (
+          <>
+            <CopyChip
+              label="Link"
+              icon={Link2}
+              value={`${window.location.origin}/?token=${p.claimToken}`}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">{formatDate(p.detailsSubmittedAt)}</p>
+            <p className="text-xs text-muted-foreground">{formatTime(p.detailsSubmittedAt)}</p>
+          </>
         ) : (
           <span className="text-muted-foreground">—</span>
         )}
       </td>
       <td className="px-4 py-4">
+        <ConsentAcknowledgement p={p} />
+        {(p.claimAcceptedAt || p.claimLinkDeclinedAt) && (
+          <>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {formatDate(p.claimAcceptedAt ?? p.claimLinkDeclinedAt)}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {formatTime(p.claimAcceptedAt ?? p.claimLinkDeclinedAt)}
+            </p>
+          </>
+        )}
+        {!p.claimAcceptedAt && !p.claimLinkDeclinedAt && isClaimExpired(p) && (
+          <>
+            <p className="mt-1 text-xs text-destructive">Expired {formatDate(claimExpiresAt(p))}</p>
+            <p className="text-xs text-destructive">{formatTime(claimExpiresAt(p))}</p>
+          </>
+        )}
+      </td>
+      <td className="px-4 py-4">
+        {p.couponCode ? (
+          <>
+            <CopyChip label={p.couponCode} value={p.couponCode} />
+            <p className="mt-1 text-xs text-muted-foreground">{formatDate(p.claimAcceptedAt)}</p>
+            <p className="text-xs text-muted-foreground">{formatTime(p.claimAcceptedAt)}</p>
+          </>
+        ) : coinResult === "COUPON_PENDING" ? (
+          isClaimExpired(p) ? (
+            <span className="text-destructive text-xs">Link Expired — not claimed</span>
+          ) : (
+            <span className="text-xs text-amber">Awaiting consent acknowledgement</span>
+          )
+        ) : coinResult === "COUPON_DECLINED" ? (
+          <span className="text-destructive text-xs">Declined by participant</span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
+      </td>
+      {/* Final Status column hidden for now — future use
+      <td className="px-4 py-4">
         <StatusBadge
           tone={
             status === "COUPON_WINNER"
               ? "gold"
-              : status === "TASK_FAILED"
+              : status === "TASK_FAILED" || status === "COUPON_DECLINED"
                 ? "danger"
                 : status === "BETTER_LUCK_NEXT_TIME" || status === "COUPON_PENDING"
                   ? "amber"
                   : "muted"
           }
+          icon={finalStatusIcon(status)}
         >
           {FINAL_STATUS_LABEL[status]}
         </StatusBadge>
       </td>
+      */}
       <td className="px-2 py-4">
         <Button variant="ghost" size="icon" onClick={() => onOpen(p)} aria-label="View details">
           <PanelRightOpen />
@@ -132,6 +257,23 @@ export function ParticipantJourneyRow({
       </td>
     </tr>
   );
+}
+
+function coinResultIcon(result: string) {
+  if (result === "COUPON") return Sparkles;
+  if (result === "COUPON_DECLINED") return XCircle;
+  if (result === "NOT_INTERESTED") return XCircle;
+  if (result === "BETTER_LUCK_NEXT_TIME") return TimerOff;
+  if (result === "COUPON_PENDING") return Clock;
+  return undefined;
+}
+
+function finalStatusIcon(status: string) {
+  if (status === "COUPON_WINNER") return Sparkles;
+  if (status === "TASK_FAILED" || status === "COUPON_DECLINED") return XCircle;
+  if (status === "BETTER_LUCK_NEXT_TIME") return TimerOff;
+  if (status === "COUPON_PENDING") return Clock;
+  return undefined;
 }
 
 export function ParticipantJourneyCard({
@@ -155,13 +297,14 @@ export function ParticipantJourneyCard({
           tone={
             status === "COUPON_WINNER" ? "gold" : status === "COUPON_PENDING" ? "amber" : "muted"
           }
+          icon={finalStatusIcon(status)}
         >
           {FINAL_STATUS_LABEL[status]}
         </StatusBadge>
       </div>
       <div className="grid grid-cols-2 gap-3 text-sm">
         <div>
-          <p className="text-xs uppercase text-muted-foreground">Registered</p>
+          <p className="text-xs uppercase text-muted-foreground">Participant Started</p>
           <p>{formatTime(p.registeredAt)}</p>
         </div>
         <div>
@@ -171,9 +314,22 @@ export function ParticipantJourneyCard({
       </div>
       {p.wheelTask && <p className="text-sm leading-snug">{p.wheelTask}</p>}
       <div className="flex flex-wrap items-center gap-2">
-        <StatusBadge tone={taskStatusTone(p.taskStatus)}>{p.taskStatus ?? "PENDING"}</StatusBadge>
-        <StatusBadge tone={coinResultTone(coinResult)}>{COIN_RESULT_LABEL[coinResult]}</StatusBadge>
-        {p.couponCode && <CouponCode code={p.couponCode} />}
+        <StatusBadge
+          tone={taskStatusTone(p.taskStatus)}
+          icon={
+            p.taskStatus === "COMPLETED"
+              ? CheckCircle2
+              : p.taskStatus === "FAILED"
+                ? XCircle
+                : Clock
+          }
+        >
+          {p.taskStatus ?? "PENDING"}
+        </StatusBadge>
+        <StatusBadge tone={coinResultTone(coinResult)} icon={coinResultIcon(coinResult)}>
+          {COIN_RESULT_LABEL[coinResult]}
+        </StatusBadge>
+        {p.couponCode && <CopyChip label={p.couponCode} value={p.couponCode} />}
       </div>
       <Button variant="outline" size="sm" className="w-full" onClick={() => onOpen(p)}>
         View Details

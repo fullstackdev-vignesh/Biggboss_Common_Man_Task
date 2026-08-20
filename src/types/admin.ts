@@ -1,7 +1,13 @@
 export type TaskStatus = "PENDING" | "COMPLETED" | "FAILED";
 
 export type CoinResult =
-  "COUPON" | "COUPON_PENDING" | "BETTER_LUCK_NEXT_TIME" | "NOT_ELIGIBLE" | "NOT_FLIPPED";
+  | "COUPON"
+  | "COUPON_PENDING"
+  | "NOT_INTERESTED"
+  | "COUPON_DECLINED"
+  | "BETTER_LUCK_NEXT_TIME"
+  | "NOT_ELIGIBLE"
+  | "NOT_FLIPPED";
 
 export type FinalStatus =
   | "REGISTERED"
@@ -11,6 +17,8 @@ export type FinalStatus =
   | "COIN_PENDING"
   | "COUPON_WINNER"
   | "COUPON_PENDING"
+  | "NOT_INTERESTED"
+  | "COUPON_DECLINED"
   | "BETTER_LUCK_NEXT_TIME";
 
 export interface ParticipantJourney {
@@ -30,12 +38,20 @@ export interface ParticipantJourney {
   coinFlipCompletedAt?: string | null;
   coinResult?: CoinResult | null;
   couponCode?: string | null;
+  claimToken?: string | null;
+  detailsSubmittedAt?: string | null;
   claimAccepted?: boolean;
+  claimAcceptedAt?: string | null;
+  claimDeclined?: boolean;
+  claimLinkDeclined?: boolean;
+  claimLinkDeclinedAt?: string | null;
   completedAt?: string | null;
 }
 
 export function finalStatusOf(p: ParticipantJourney): FinalStatus {
   if (p.coinResult === "COUPON") return "COUPON_WINNER";
+  if (p.coinResult === "NOT_INTERESTED") return "NOT_INTERESTED";
+  if (p.coinResult === "COUPON_DECLINED") return "COUPON_DECLINED";
   if (p.coinResult === "COUPON_PENDING") return "COUPON_PENDING";
   if (p.coinResult === "BETTER_LUCK_NEXT_TIME") return "BETTER_LUCK_NEXT_TIME";
   if (p.taskStatus === "FAILED") return "TASK_FAILED";
@@ -53,5 +69,7 @@ export const FINAL_STATUS_LABEL: Record<FinalStatus, string> = {
   COIN_PENDING: "Coin Pending",
   COUPON_WINNER: "Coupon Winner",
   COUPON_PENDING: "Coupon Pending (Claim Link)",
+  NOT_INTERESTED: "Not Interested",
+  COUPON_DECLINED: "Coupon Declined",
   BETTER_LUCK_NEXT_TIME: "Better Luck Next Time",
 };

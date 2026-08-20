@@ -201,6 +201,8 @@ export function ReportToolbar({
             <SelectItem value="ALL">All Coin Results</SelectItem>
             <SelectItem value="COUPON">Coupon Winner</SelectItem>
             <SelectItem value="COUPON_PENDING">Pending (Claim Link)</SelectItem>
+            <SelectItem value="NOT_INTERESTED">Not Interested</SelectItem>
+            <SelectItem value="COUPON_DECLINED">Coupon Declined</SelectItem>
             <SelectItem value="BETTER_LUCK_NEXT_TIME">Better Luck Next Time</SelectItem>
             <SelectItem value="NOT_ELIGIBLE">Not Eligible</SelectItem>
             <SelectItem value="NOT_FLIPPED">Not Flipped Yet</SelectItem>
@@ -211,7 +213,7 @@ export function ReportToolbar({
           <RotateCcw /> Reset
         </Button>
         <Button size="sm" onClick={onExport}>
-          <FileDown /> Export CSV
+          <FileDown /> Export Excel
         </Button>
       </div>
     </div>

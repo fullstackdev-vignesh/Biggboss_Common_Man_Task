@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminReportsRouteImport } from './routes/admin/reports'
-import { Route as ClaimTokenRouteImport } from './routes/claim/$token'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -29,43 +28,34 @@ const AdminReportsRoute = AdminReportsRouteImport.update({
   path: '/admin/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ClaimTokenRoute = ClaimTokenRouteImport.update({
-  id: '/claim/$token',
-  path: '/claim/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin/reports': typeof AdminReportsRoute
-  '/claim/$token': typeof ClaimTokenRoute
   '/admin/': typeof AdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin/reports': typeof AdminReportsRoute
-  '/claim/$token': typeof ClaimTokenRoute
   '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin/reports': typeof AdminReportsRoute
-  '/claim/$token': typeof ClaimTokenRoute
   '/admin/': typeof AdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin/reports' | '/claim/$token' | '/admin/'
+  fullPaths: '/' | '/admin/reports' | '/admin/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin/reports' | '/claim/$token' | '/admin'
-  id: '__root__' | '/' | '/admin/reports' | '/claim/$token' | '/admin/'
+  to: '/' | '/admin/reports' | '/admin'
+  id: '__root__' | '/' | '/admin/reports' | '/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminReportsRoute: typeof AdminReportsRoute
-  ClaimTokenRoute: typeof ClaimTokenRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -92,20 +82,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/claim/$token': {
-      id: '/claim/$token'
-      path: '/claim/$token'
-      fullPath: '/claim/$token'
-      preLoaderRoute: typeof ClaimTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminReportsRoute: AdminReportsRoute,
-  ClaimTokenRoute: ClaimTokenRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 export const routeTree = rootRouteImport

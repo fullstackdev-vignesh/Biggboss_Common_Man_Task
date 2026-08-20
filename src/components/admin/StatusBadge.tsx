@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -15,20 +16,23 @@ const TONE_CLASS: Record<Tone, string> = {
 export function StatusBadge({
   children,
   tone = "muted",
+  icon: Icon,
   className,
 }: {
   children: ReactNode;
   tone?: Tone;
+  icon?: LucideIcon;
   className?: string;
 }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider",
+        "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider",
         TONE_CLASS[tone],
         className,
       )}
     >
+      {Icon && <Icon className="size-3" />}
       {children}
     </span>
   );
@@ -43,6 +47,8 @@ export function taskStatusTone(status?: string | null): Tone {
 export function coinResultTone(result?: string | null): Tone {
   if (result === "COUPON") return "gold";
   if (result === "COUPON_PENDING") return "pending";
+  if (result === "NOT_INTERESTED") return "muted";
+  if (result === "COUPON_DECLINED") return "danger";
   if (result === "BETTER_LUCK_NEXT_TIME") return "amber";
   if (result === "NOT_ELIGIBLE") return "muted";
   return "pending";
@@ -51,6 +57,8 @@ export function coinResultTone(result?: string | null): Tone {
 export const COIN_RESULT_LABEL: Record<string, string> = {
   COUPON: "Coupon Winner",
   COUPON_PENDING: "Pending (Claim Link)",
+  NOT_INTERESTED: "Not Interested",
+  COUPON_DECLINED: "Coupon Declined",
   BETTER_LUCK_NEXT_TIME: "Better Luck Next Time",
   NOT_ELIGIBLE: "Not Eligible",
   NOT_FLIPPED: "Not Flipped Yet",

@@ -1,4 +1,19 @@
-import { ArrowDown, ArrowUp } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Award,
+  Calendar,
+  Coins,
+  Flag,
+  Hash,
+  Link2,
+  ListTodo,
+  MoreHorizontal,
+  RotateCw,
+  ShieldCheck,
+  Ticket,
+  User,
+} from "lucide-react";
 
 import {
   ParticipantJourneyCard,
@@ -8,18 +23,25 @@ import { Button } from "@/components/ui/button";
 import type { SortKey } from "@/lib/admin/report-filters";
 import type { ParticipantJourney } from "@/types/admin";
 
-const COLUMNS: { label: string; sort?: SortKey; className?: string }[] = [
-  { label: "S.No" },
-  { label: "Participant" },
-  { label: "Registered", sort: "registeredAt" },
-  { label: "Wheel", sort: "wheelSpinCompletedAt" },
-  { label: "Task" },
-  { label: "Task Status", sort: "taskStatus" },
-  { label: "Coin Round", sort: "coinFlipCompletedAt" },
-  { label: "Coin Result", sort: "coinResult" },
-  { label: "Coupon" },
-  { label: "Final Status" },
-  { label: "" },
+const COLUMNS: {
+  label: string;
+  sort?: SortKey;
+  className?: string;
+  icon?: typeof Hash;
+}[] = [
+  { label: "S.No", icon: Hash },
+  { label: "Participant", icon: User },
+  { label: "Participant Started", sort: "registeredAt", icon: Calendar },
+  { label: "Wheel", sort: "wheelSpinCompletedAt", icon: RotateCw },
+  // { label: "Task", icon: ListTodo }, // hidden for now — future use
+  { label: "Task Status", sort: "taskStatus", icon: ShieldCheck },
+  { label: "Coin Round", sort: "coinFlipCompletedAt", icon: Coins },
+  { label: "Coin Result", sort: "coinResult", icon: Award },
+  { label: "Consent Link", icon: Link2 },
+  { label: "Consent Acknowledgement", icon: ShieldCheck },
+  { label: "Coupon Claim", icon: Ticket },
+  // { label: "Final Status", icon: Flag }, // hidden for now — future use
+  { label: "Action", icon: MoreHorizontal },
 ];
 
 function SkeletonRows() {
@@ -75,33 +97,40 @@ export function ParticipantJourneyTable({
   return (
     <>
       <div className="glass-panel hidden overflow-x-auto rounded-2xl md:block">
-        <table className="w-full min-w-[1180px] border-collapse text-left">
+        <table className="w-full min-w-[1420px] border-collapse text-left">
           <thead className="sticky top-0 z-10 bg-surface-raised/95 backdrop-blur">
             <tr>
-              {COLUMNS.map((col) => (
-                <th
-                  key={col.label}
-                  className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
-                >
-                  {col.sort ? (
-                    <button
-                      type="button"
-                      onClick={() => onSort(col.sort!)}
-                      className="inline-flex items-center gap-1 hover:text-primary"
-                    >
-                      {col.label}
-                      {sortKey === col.sort &&
-                        (sortDir === "asc" ? (
-                          <ArrowUp className="size-3" />
-                        ) : (
-                          <ArrowDown className="size-3" />
-                        ))}
-                    </button>
-                  ) : (
-                    col.label
-                  )}
-                </th>
-              ))}
+              {COLUMNS.map((col) => {
+                const Icon = col.icon;
+                return (
+                  <th
+                    key={col.label}
+                    className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
+                  >
+                    {col.sort ? (
+                      <button
+                        type="button"
+                        onClick={() => onSort(col.sort!)}
+                        className="inline-flex items-center gap-1.5 hover:text-primary"
+                      >
+                        {Icon && <Icon className="size-3.5" />}
+                        {col.label}
+                        {sortKey === col.sort &&
+                          (sortDir === "asc" ? (
+                            <ArrowUp className="size-3" />
+                          ) : (
+                            <ArrowDown className="size-3" />
+                          ))}
+                      </button>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5">
+                        {Icon && <Icon className="size-3.5" />}
+                        {col.label}
+                      </span>
+                    )}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>

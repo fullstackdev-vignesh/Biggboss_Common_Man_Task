@@ -23,7 +23,11 @@ function toTaskStatus(spinnerStatus: BiggUser["spinnerStatus"]): TaskStatus {
 // claim link, ticked "I Accept" and submitted — until then it's pending,
 // and the coupon code stays hidden (see the claim-link flow in api.ts).
 function toCoinResult(user: BiggUser): CoinResult {
-  if (user.coinResult === "win") return user.claimAccepted ? "COUPON" : "COUPON_PENDING";
+  if (user.coinResult === "win") {
+    if (user.claimDeclined) return "NOT_INTERESTED";
+    if (user.claimLinkDeclined) return "COUPON_DECLINED";
+    return user.claimAccepted ? "COUPON" : "COUPON_PENDING";
+  }
   if (user.coinResult === "lose") return "BETTER_LUCK_NEXT_TIME";
   if (user.spinnerStatus === "rejected") return "NOT_ELIGIBLE";
   return "NOT_FLIPPED";
@@ -47,7 +51,13 @@ function toJourney(user: BiggUser): ParticipantJourney {
     coinFlipCompletedAt: user.coinFlipCompletedAt ?? null,
     coinResult: toCoinResult(user),
     couponCode: user.claimAccepted ? (user.couponCode ?? null) : null,
+    claimToken: user.claimToken ?? null,
+    detailsSubmittedAt: user.claimTokenIssuedAt ?? null,
     claimAccepted: user.claimAccepted ?? false,
+    claimAcceptedAt: user.claimAcceptedAt ?? null,
+    claimDeclined: user.claimDeclined ?? false,
+    claimLinkDeclined: user.claimLinkDeclined ?? false,
+    claimLinkDeclinedAt: user.claimLinkDeclinedAt ?? null,
     completedAt: user.completedAt ?? null,
   };
 }

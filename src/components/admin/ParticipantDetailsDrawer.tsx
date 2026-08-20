@@ -21,7 +21,7 @@ export function ParticipantDetailsDrawer({
   const events: { time: string | null | undefined; label: string; detail?: string | undefined }[] =
     p
       ? [
-          { time: p.registeredAt, label: "Participant Registered" },
+          { time: p.registeredAt, label: "Participant Started" },
           { time: p.wheelSpinStartedAt, label: "Wheel Spin Started" },
           {
             time: p.wheelSpinCompletedAt,

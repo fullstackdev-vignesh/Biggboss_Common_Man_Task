@@ -1,6 +1,6 @@
 const AUTH_KEY = "bb-admin-auth";
-const ADMIN_USERNAME = "vignesh";
-const ADMIN_PASSWORD = "9345771779";
+const ADMIN_USERNAME = "admin";
+const ADMIN_PASSWORD = "admin";
 
 export function isAdminAuthed(): boolean {
   if (typeof window === "undefined") return false;
