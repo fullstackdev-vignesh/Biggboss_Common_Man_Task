@@ -47,9 +47,7 @@ export function ParticipantDetailsDrawer({
         {p && (
           <>
             <SheetHeader>
-              <SheetTitle className=" text-xl ">
-                {p.name?.trim() || "Guest"}
-              </SheetTitle>
+              <SheetTitle className=" text-xl ">{p.name?.trim() || "Guest"}</SheetTitle>
               <SheetDescription>{formatPhone(p.phone)}</SheetDescription>
             </SheetHeader>
             <div className="space-y-6 px-4 pb-8">

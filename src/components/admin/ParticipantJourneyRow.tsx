@@ -185,7 +185,7 @@ export function ParticipantJourneyRow({
             <CopyChip
               label="Link"
               icon={Link2}
-              value={`${window.location.origin}/?token=${p.claimToken}`}
+              value={`${window.location.origin}/bcm/?token=${p.claimToken}`}
             />
             <p className="mt-1 text-xs text-muted-foreground">{formatDate(p.detailsSubmittedAt)}</p>
             <p className="text-xs text-muted-foreground">{formatTime(p.detailsSubmittedAt)}</p>

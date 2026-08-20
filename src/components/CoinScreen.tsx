@@ -93,7 +93,7 @@ export function CoinScreen({ sessionId, onFinish, onFormVisibleChange }: CoinScr
         locationLat,
         locationLng,
       );
-      setClaimLink(`${window.location.origin}/?token=${claimToken}`);
+      setClaimLink(`${window.location.origin}/bcm/?token=${claimToken}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not submit. Please try again.");
     } finally {
