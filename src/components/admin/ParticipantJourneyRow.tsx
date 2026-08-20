@@ -108,7 +108,7 @@ export function ParticipantJourneyRow({
     <tr className="border-b border-border/60 align-top transition-colors hover:bg-surface-raised/60">
       <td className="px-4 py-4 text-sm text-muted-foreground">{String(index).padStart(2, "0")}</td>
       <td className="px-4 py-4">
-        <p className="font-semibold">{p.name?.trim() || "Guest Participant"}</p>
+        <p className="font-semibold">{p.name?.trim() || "Guest"}</p>
         <p className="text-xs text-muted-foreground">{p.phone ? formatPhone(p.phone) : "—"}</p>
       </td>
       <td className="px-4 py-4 text-sm">
@@ -290,7 +290,7 @@ export function ParticipantJourneyCard({
     <div className="glass-panel space-y-3 rounded-xl p-4">
       <div className="flex items-start justify-between">
         <div>
-          <p className="font-semibold">{p.name?.trim() || "Guest Participant"}</p>
+          <p className="font-semibold">{p.name?.trim() || "Guest"}</p>
           <p className="text-xs text-muted-foreground">{p.phone ? formatPhone(p.phone) : "—"}</p>
         </div>
         <StatusBadge

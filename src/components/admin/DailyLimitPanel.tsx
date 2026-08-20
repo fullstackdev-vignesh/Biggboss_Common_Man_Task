@@ -15,6 +15,7 @@ export function DailyLimitPanel() {
   const query = useQuery({
     queryKey: ["admin-participant-limit"],
     queryFn: fetchParticipantLimit,
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {

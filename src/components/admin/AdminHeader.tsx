@@ -22,7 +22,11 @@ export function AdminHeader({
   return (
     <header className="glass-panel flex flex-col gap-4 rounded-2xl p-5 md:flex-row md:items-center md:justify-between">
       <div className="flex items-center gap-4">
-        <img src={import.meta.env.BASE_URL + "images/bb-eye.png"} alt="Bigg Boss eye" className="h-10 w-auto" />
+        <img
+          src={import.meta.env.BASE_URL + "images/bb-eye.png"}
+          alt="Bigg Boss eye"
+          className="h-10 w-auto"
+        />
         <div>
           <h1 className="display-font text-2xl gold-text">BIGG BOSS COMMON MAN</h1>
           <p className="text-sm font-semibold text-foreground">Participant Journey Report</p>

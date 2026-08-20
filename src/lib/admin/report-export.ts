@@ -195,7 +195,7 @@ function pdfRow(p: ParticipantJourney, index: number): string[] {
 
   return [
     String(index),
-    `${p.name?.trim() || "Guest Participant"}\n${p.phone || "—"}`,
+    `${p.name?.trim() || "Guest"}\n${p.phone || "—"}`,
     stamp(p.registeredAt),
     wheel,
     taskStatus,

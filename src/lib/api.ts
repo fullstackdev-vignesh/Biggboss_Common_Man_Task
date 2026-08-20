@@ -1,5 +1,5 @@
-const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "https://backend-bq11.onrender.com";
-
+// const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "https://backend-bq11.onrender.com";
+const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "http://localhost:3001";
 
 export class ApiError extends Error {
   constructor(message: string) {
@@ -53,7 +53,7 @@ export interface BiggUser {
 /** Called when "Enter the Task" is tapped — creates an anonymous session
  * (enforces the daily participant limit) before the wheel spin. */
 export function startSession() {
-  return request<{ ok: true; sessionId: string; user: BiggUser }>("/api/user/session", {
+  return request<{ ok: true; sessionId: string; user: BiggUser | null }>("/api/user/session", {
     method: "POST",
   });
 }

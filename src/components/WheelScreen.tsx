@@ -25,8 +25,14 @@ export function WheelScreen({ sessionId, onProceed, onFailed }: WheelScreenProps
   const handleSpinStart = useCallback(() => {
     setSpinning(true);
     setSettledIndex(null);
-    void startSpin(sessionId).catch((err) => console.error("startSpin failed", err));
-  }, [sessionId]);
+    void startSpin(sessionId).catch((err) => {
+      console.error("startSpin failed", err);
+      // The daily limit can be reached right at spin time (re-checked
+      // server-side) even though "Enter the Task" allowed it through.
+      setSpinning(false);
+      onFailed();
+    });
+  }, [sessionId, onFailed]);
 
   const handleSettled = useCallback((index: number) => {
     const category = challengeCategories[index]!;

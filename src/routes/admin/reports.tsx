@@ -64,7 +64,7 @@ function AdminReportsPage() {
   const query = useQuery({
     queryKey: ["admin-participant-journeys", range.from, range.to],
     queryFn: () => fetchJourneys(range),
-    refetchInterval: 30000,
+    refetchOnWindowFocus: false,
   });
 
   const all = useMemo(() => query.data ?? [], [query.data]);

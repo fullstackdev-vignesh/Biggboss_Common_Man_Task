@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Eye, EyeOff } from "lucide-react";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { ASSETS } from "@/lib/assets";
 import { tryAdminLogin } from "@/hooks/useAdminAuth";
@@ -13,6 +14,7 @@ const reveal = (delay: number) => ({
 export function AdminLoginScreen({ onSuccess }: { onSuccess: () => void }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = (event: FormEvent) => {
@@ -100,21 +102,31 @@ export function AdminLoginScreen({ onSuccess }: { onSuccess: () => void }) {
             <label htmlFor="password" className="text-xs tracking-[0.25em] text-muted-foreground">
               PASSWORD
             </label>
-            <input
-              id="password"
-              value={password}
-              type="password"
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setError(null);
-              }}
-              placeholder="Enter your password"
-              autoComplete="current-password"
-              className="mt-3 w-full rounded-xl border border-input bg-card/60 px-5 py-4 text-base text-foreground outline-none backdrop-blur transition-all placeholder:text-muted-foreground/60 focus:border-primary focus:shadow-[0_0_0_4px_color-mix(in_oklab,var(--gold)_18%,transparent)]"
-              aria-invalid={Boolean(error)}
-              aria-describedby={error ? "password-error" : undefined}
-              required
-            />
+            <div className="relative mt-3">
+              <input
+                id="password"
+                value={password}
+                type={showPassword ? "text" : "password"}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError(null);
+                }}
+                placeholder="Enter your password"
+                autoComplete="current-password"
+                className="w-full rounded-xl border border-input bg-card/60 px-5 py-4 pr-12 text-base text-foreground outline-none backdrop-blur transition-all placeholder:text-muted-foreground/60 focus:border-primary focus:shadow-[0_0_0_4px_color-mix(in_oklab,var(--gold)_18%,transparent)]"
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? "password-error" : undefined}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-primary"
+              >
+                {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+              </button>
+            </div>
             <AnimatePresence>
               {error && (
                 <motion.p
