@@ -138,17 +138,41 @@ export function CoinScreen({ sessionId, onFinish, onFormVisibleChange }: CoinScr
             transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
           >
             {face === "success" ? (
-              <>
-                <GoldConfetti count={70} mode="fall" />
-                <GoldConfetti count={44} mode="burst" />
-                <h1 className="display text-gold text-center text-[clamp(2.2rem,7vw,4.2rem)] leading-none">
-                  Congratulations!
-                </h1>
-                <p className="mt-4 max-w-md text-center text-sm text-muted-foreground sm:text-base">
-                  Bigg Boss Common Man Task Entry Coupon.
-                </p>
-
-                {!claimLink ? (
+              claimLink ? (
+                <div className="relative z-10 flex w-full max-w-5xl flex-col items-center gap-10 px-2 lg:flex-row lg:items-center lg:justify-between lg:gap-16">
+                  <GoldConfetti count={70} mode="fall" />
+                  <GoldConfetti count={44} mode="burst" />
+                  <div className="max-w-md text-center lg:text-left">
+                    <h1 className="display text-gold text-[clamp(2.2rem,7vw,4.2rem)] leading-none">
+                      Congratulations!
+                    </h1>
+                    <p className="mt-4 text-sm text-muted-foreground sm:text-base">
+                      We have sent a link to your mobile number.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={onFinish}
+                      className="btn-gold mt-8 w-full px-10 py-4 text-sm sm:w-auto sm:text-base"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <img
+                    src={import.meta.env.BASE_URL + "images/mobile-how-it-works.png"}
+                    alt="How it works"
+                    className="w-full max-w-xs sm:max-w-sm"
+                  />
+                </div>
+              ) : (
+                <>
+                  <GoldConfetti count={70} mode="fall" />
+                  <GoldConfetti count={44} mode="burst" />
+                  <h1 className="display text-gold text-center text-[clamp(2.2rem,7vw,4.2rem)] leading-none">
+                    Congratulations!
+                  </h1>
+                  <p className="mt-4 max-w-md text-center text-sm text-muted-foreground sm:text-base">
+                    Bigg Boss Common Man Task Entry Coupon.
+                  </p>
                   <form onSubmit={handleClaimSubmit} noValidate className="mt-10 w-full max-w-md">
                     <label
                       htmlFor="coin-name"
@@ -218,27 +242,8 @@ export function CoinScreen({ sessionId, onFinish, onFormVisibleChange }: CoinScr
                       </button>
                     </div>
                   </form>
-                ) : (
-                  <div className="mt-10 w-full max-w-md">
-                    <p className="text-xs tracking-[0.3em] text-muted-foreground">
-                      YOUR COUPON LINK
-                    </p>
-                    <p className="mt-3 break-all rounded-xl border border-primary/40 bg-card/60 px-5 py-4 text-sm text-primary backdrop-blur">
-                      {claimLink}
-                    </p>
-                    <p className="mt-4 text-center text-xs text-muted-foreground sm:text-sm">
-                      Open the link and accept the terms and conditions to reveal your coupon code.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={onFinish}
-                      className="btn-gold mt-8 w-full px-10 py-4 text-sm sm:text-base"
-                    >
-                      Close
-                    </button>
-                  </div>
-                )}
-              </>
+                </>
+              )
             ) : (
               <>
                 <motion.div

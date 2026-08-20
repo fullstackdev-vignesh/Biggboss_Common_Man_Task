@@ -248,7 +248,7 @@ export async function downloadPdf(rows: ParticipantJourney[]) {
     return result;
   };
 
-  const logo = await loadImageAsDataUrl("/images/bb-logo.png");
+  const logo = await loadImageAsDataUrl(`${import.meta.env.BASE_URL}images/bb-logo.png`);
   if (logo) {
     const logoWidth = 60;
     const logoHeight = 30;

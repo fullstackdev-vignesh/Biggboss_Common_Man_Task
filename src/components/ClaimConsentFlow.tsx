@@ -193,7 +193,7 @@ export function ClaimConsentFlow({ token }: { token: string }) {
       {state.status === "loading" && (
         <div className="relative z-10 flex min-h-[70vh] flex-col items-center justify-center gap-6">
           <img
-            src="/images/bb-logo.png"
+            src={import.meta.env.BASE_URL + "images/bb-logo.png"}
             alt="Bigg Boss Season 10"
             className="h-24 w-auto object-contain sm:h-28"
           />
@@ -233,7 +233,7 @@ export function ClaimConsentFlow({ token }: { token: string }) {
 
             <div className="text-center">
               <img
-                src="/images/bb-logo.png"
+                src={import.meta.env.BASE_URL + "images/bb-logo.png"}
                 alt="Bigg Boss Season 10"
                 className="mx-auto h-24 w-auto object-contain sm:h-28"
               />
@@ -547,7 +547,7 @@ function DeclinedPanel() {
       transition={{ duration: 0.7 }}
     >
       <img
-        src="/images/bb-eye.png"
+        src={import.meta.env.BASE_URL + "images/bb-eye.png"}
         alt="Bigg Boss"
         className="mx-auto h-11 w-auto object-contain"
       />
@@ -571,7 +571,7 @@ function ExpiredCard({ name }: { name: string | null }) {
       transition={{ duration: 0.7 }}
     >
       <img
-        src="/images/bb-logo.png"
+        src={import.meta.env.BASE_URL + "images/bb-logo.png"}
         alt="Bigg Boss Season 10"
         className="mx-auto h-16 w-auto object-contain"
       />
