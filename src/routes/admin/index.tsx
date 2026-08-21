@@ -4,7 +4,7 @@ import { AdminLoginScreen } from "@/components/admin/AdminLoginScreen";
 export const Route = createFileRoute("/admin/")({
   ssr: false,
   head: () => ({
-    meta: [{ title: "Admin Login — Bigg Boss Common Man" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Admin Login — Bigg Boss " }, { name: "robots", content: "noindex" }],
   }),
   component: AdminLoginRoute,
 });

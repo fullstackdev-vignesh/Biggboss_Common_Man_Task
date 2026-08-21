@@ -24,27 +24,10 @@ export function CoinScreen({ sessionId, onFinish, onFormVisibleChange }: CoinScr
   const [phone, setPhone] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);
-  const [locationLat, setLocationLat] = useState<number | undefined>(undefined);
-  const [locationLng, setLocationLng] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     onFormVisibleChange?.(face === "success" && !claimLink);
   }, [face, claimLink, onFormVisibleChange]);
-
-  // Trigger the location permission prompt as soon as the Congratulations
-  // screen appears, so GPS has time to get a fix before the user submits.
-  useEffect(() => {
-    if (face !== "success") return;
-    if (typeof navigator === "undefined" || !navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocationLat(pos.coords.latitude);
-        setLocationLng(pos.coords.longitude);
-      },
-      () => {},
-      { enableHighAccuracy: true, timeout: 15000 },
-    );
-  }, [face]);
 
   const handleFlipStart = useCallback(() => {
     void startCoin(sessionId).catch((err) => console.error("startCoin failed", err));
@@ -86,13 +69,7 @@ export function CoinScreen({ sessionId, onFinish, onFormVisibleChange }: CoinScr
 
     setSubmitting(true);
     try {
-      const { claimToken } = await registerClaim(
-        sessionId,
-        name.trim(),
-        phone.replace(/\D/g, ""),
-        locationLat,
-        locationLng,
-      );
+      const { claimToken } = await registerClaim(sessionId, name.trim(), phone.replace(/\D/g, ""));
       setClaimLink(`${window.location.origin}/bcm/?token=${claimToken}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not submit. Please try again.");
@@ -171,7 +148,7 @@ export function CoinScreen({ sessionId, onFinish, onFormVisibleChange }: CoinScr
                     Congratulations!
                   </h1>
                   <p className="mt-4 max-w-md text-center text-sm text-muted-foreground sm:text-base">
-                    Bigg Boss Common Man Task Entry Coupon.
+                    Bigg Boss Task Entry Coupon.
                   </p>
                   <form onSubmit={handleClaimSubmit} noValidate className="mt-10 w-full max-w-md">
                     <label
@@ -259,7 +236,7 @@ export function CoinScreen({ sessionId, onFinish, onFormVisibleChange }: CoinScr
                   Better Luck Next Time
                 </h1>
                 <p className="mt-5 max-w-lg text-center text-sm text-muted-foreground sm:text-base">
-                  Thank you for taking on the Bigg Boss Common Man Challenge.
+                  Thank you for taking on the Bigg Boss Challenge.
                 </p>
 
                 <button

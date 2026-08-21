@@ -32,11 +32,11 @@ export const Route = createFileRoute("/admin/reports")({
   },
   head: () => ({
     meta: [
-      { title: "Participant Journey Report — Bigg Boss Common Man Admin" },
+      { title: "Participant Journey Report — Bigg Boss Admin" },
       {
         name: "description",
         content:
-          "Admin dashboard showing every Bigg Boss Common Man participant journey from registration to coupon result.",
+          "Admin dashboard showing every Bigg Boss participant journey from registration to coupon result.",
       },
       { name: "robots", content: "noindex" },
     ],

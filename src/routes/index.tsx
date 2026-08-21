@@ -15,13 +15,13 @@ export const Route = createFileRoute("/")({
   }),
   head: () => ({
     meta: [
-      { title: "Bigg Boss Season 10 — Common Man Task" },
+      { title: "Bigg Boss Season 10 —  Task" },
       {
         name: "description",
         content:
-          "Step into the spotlight: spin the Bigg Boss wheel, take on your Common Man Task and flip the coin for an entry coupon.",
+          "Step into the spotlight: spin the Bigg Boss wheel, take on your Task and flip the coin for an entry coupon.",
       },
-      { property: "og:title", content: "Bigg Boss Season 10 — Common Man Task" },
+      { property: "og:title", content: "Bigg Boss Season 10 — Task" },
       {
         property: "og:description",
         content:

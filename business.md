@@ -1,4 +1,4 @@
-# Bigg Boss Common Man Task — New Business Flow (Tanglish)
+# Bigg Boss Task — New Business Flow (Tanglish)
 
 Idha document oru **business/flow spec** — code illa, appdi enna maadhiri app work aganum nu explain pandrom. Existing screens (Splash, Wheel, Coin, Coupon) same UI/design, aana flow order matum change agudhu.
 

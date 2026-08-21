@@ -69,15 +69,9 @@ export function AdminLoginScreen({ onSuccess }: { onSuccess: () => void }) {
           <motion.p {...reveal(0.35)} className="text-xs tracking-[0.4em] text-primary sm:text-sm">
             ADMIN LOGIN
           </motion.p>
-          {/* <motion.h1
-            {...reveal(0.45)}
-            className="display mt-5 text-3xl leading-[1.05] text-gold sm:text-4xl lg:text-[2.9rem]"
-          >
-            
-              Sign in to view the Common Man participant journey report.
-          </motion.h1> */}
+
           <motion.p {...reveal(0.6)} className="mt-4 text-sm text-muted-foreground sm:text-base">
-            Sign in to view the Common Man participant journey report.
+            Sign in to view the participant journey report.
           </motion.p>
 
           <motion.div {...reveal(0.75)} className="mt-10">

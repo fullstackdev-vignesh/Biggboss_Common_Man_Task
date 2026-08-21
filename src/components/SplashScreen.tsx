@@ -82,15 +82,6 @@ export function SplashScreen({
         </motion.div>
       </motion.div>
 
-      <motion.p
-        className="relative z-10 mt-8 max-w-md text-center text-sm tracking-[0.35em] text-muted-foreground sm:text-base"
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.9, delay: 1.5 }}
-      >
-        COMMON MAN TASK
-      </motion.p>
-
       <motion.button
         type="button"
         onClick={handleEnter}

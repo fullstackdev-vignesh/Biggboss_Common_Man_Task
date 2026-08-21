@@ -4,7 +4,7 @@ export interface ConsentSection {
 }
 
 export const CONSENT_INTRO =
-  "You are about to participate in the Confession Room stage of the Bigg Boss Tamil Common Man Audition process. Please read the following information carefully before entering the Confession Room.";
+  "You are about to participate in the Confession Room stage of the Bigg Boss Tamil  Audition process. Please read the following information carefully before entering the Confession Room.";
 
 export const CONSENT_SECTIONS: ConsentSection[] = [
   {

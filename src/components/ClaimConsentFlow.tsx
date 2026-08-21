@@ -1,17 +1,11 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, Circle, MapPin, Phone as PhoneIcon, User as UserIcon } from "lucide-react";
+import { CheckCircle2, Circle, Phone as PhoneIcon, User as UserIcon } from "lucide-react";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { GoldConfetti } from "@/components/GoldConfetti";
 import { EntryCoupon } from "@/components/EntryCoupon";
 import { cn, formatPhone } from "@/lib/utils";
-import {
-  acceptClaim,
-  declineClaimLink,
-  getClaim,
-  type ClaimInfo,
-  type ClaimLocation,
-} from "@/lib/api";
+import { acceptClaim, declineClaimLink, getClaim, type ClaimInfo } from "@/lib/api";
 import {
   CONSENT_CONFIRMATION_TEXT,
   CONSENT_INTRO,
@@ -26,67 +20,6 @@ type LoadState =
 
 type Outcome =
   { kind: "accepted"; couponCode: string; at: string } | { kind: "declined"; at: string };
-
-type LocationStatus = "requesting" | "granted" | "denied" | "unavailable";
-
-async function reverseGeocode(location: ClaimLocation): Promise<string | null> {
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.lat}&lon=${location.lng}&zoom=16`,
-    );
-    if (!res.ok) return null;
-    const body = (await res.json()) as { display_name?: string };
-    return body.display_name ?? null;
-  } catch {
-    return null;
-  }
-}
-
-function useAutoLocation() {
-  const [status, setStatus] = useState<LocationStatus>("requesting");
-  const [location, setLocation] = useState<ClaimLocation | null>(null);
-
-  useEffect(() => {
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setStatus("unavailable");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setStatus("granted");
-      },
-      () => setStatus("denied"),
-      { enableHighAccuracy: true, timeout: 15000 },
-    );
-  }, []);
-
-  return { status, location };
-}
-
-/** Reverse-geocodes the location captured when the coin-win form was
- * submitted (`detailsLocationLat/Lng`) — shown as the claim page's LOCATION
- * field so it reflects where the form was filled in, not where the link
- * happens to be opened. */
-function useDetailsAddress(lat: number | null, lng: number | null) {
-  const [address, setAddress] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (lat === null || lng === null) {
-      setAddress(null);
-      return;
-    }
-    let cancelled = false;
-    void reverseGeocode({ lat, lng }).then((result) => {
-      if (!cancelled) setAddress(result);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [lat, lng]);
-
-  return address;
-}
 
 function formatStamp(iso: string | null | undefined): string {
   if (!iso) return "";
@@ -109,11 +42,6 @@ export function ClaimConsentFlow({ token }: { token: string }) {
   const [accepted, setAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
-  const { location } = useAutoLocation();
-  const detailsAddress = useDetailsAddress(
-    state.status === "ready" ? state.info.detailsLocationLat : null,
-    state.status === "ready" ? state.info.detailsLocationLng : null,
-  );
 
   useEffect(() => {
     let cancelled = false;
@@ -161,7 +89,7 @@ export function ClaimConsentFlow({ token }: { token: string }) {
   const handleAccept = async () => {
     setSubmitting(true);
     try {
-      const result = await acceptClaim(token, location ?? undefined);
+      const result = await acceptClaim(token);
       setOutcome({
         kind: "accepted",
         couponCode: result.couponCode,
@@ -177,7 +105,7 @@ export function ClaimConsentFlow({ token }: { token: string }) {
   const handleDecline = async () => {
     setSubmitting(true);
     try {
-      await declineClaimLink(token, location ?? undefined);
+      await declineClaimLink(token);
       setOutcome({ kind: "declined", at: new Date().toISOString() });
     } catch (err) {
       handleFailure(err);
@@ -238,7 +166,7 @@ export function ClaimConsentFlow({ token }: { token: string }) {
                 className="mx-auto h-24 w-auto object-contain sm:h-28"
               />
               <p className="mt-5 text-xs tracking-[0.3em] text-primary sm:text-sm">
-                BIGG BOSS TAMIL – COMMON MAN AUDITION
+                BIGG BOSS TAMIL – AUDITION
               </p>
               <h1 className="display mt-2 text-gold text-[clamp(1.1rem,4vw,1.6rem)] leading-tight">
                 CONFESSION ROOM – DIGITAL CONSENT, AI INTERACTION &amp; RECORDING RELEASE
@@ -254,7 +182,6 @@ export function ClaimConsentFlow({ token }: { token: string }) {
                 {!outcome && (
                   <ConsentPanel
                     info={state.info}
-                    detailsAddress={detailsAddress}
                     accepted={accepted}
                     onAcceptedChange={setAccepted}
                     onAccept={handleAccept}
@@ -415,7 +342,6 @@ function AutoField({
 
 function ConsentPanel({
   info,
-  detailsAddress,
   accepted,
   onAcceptedChange,
   onAccept,
@@ -423,7 +349,6 @@ function ConsentPanel({
   submitting,
 }: {
   info: ClaimInfo;
-  detailsAddress: string | null;
   accepted: boolean;
   onAcceptedChange: (accepted: boolean) => void;
   onAccept: () => void;
@@ -433,12 +358,6 @@ function ConsentPanel({
   const submittedDate = info.detailsSubmittedAt
     ? new Date(info.detailsSubmittedAt).toLocaleDateString("en-IN")
     : "—";
-
-  const locationText =
-    info.detailsLocationLat !== null && info.detailsLocationLng !== null
-      ? (detailsAddress ??
-        `${info.detailsLocationLat.toFixed(5)}, ${info.detailsLocationLng.toFixed(5)}`)
-      : "Not captured";
 
   return (
     <div>
@@ -456,9 +375,6 @@ function ConsentPanel({
         />
         <AutoField icon={UserIcon} label="PARTICIPANT ID" value={info.participantId} />
         <AutoField icon={UserIcon} label="DATE" value={submittedDate} />
-        <div className="sm:col-span-2">
-          <AutoField icon={MapPin} label="LOCATION" value={locationText} />
-        </div>
       </div>
 
       <p className="mt-5 text-sm leading-relaxed text-muted-foreground">{CONSENT_INTRO}</p>
@@ -555,8 +471,8 @@ function DeclinedPanel() {
         Coupon Declined
       </h1>
       <p className="mt-4 text-sm text-muted-foreground sm:text-base">
-        You've chosen not to enter the Confession Room. Your Common Man Challenge Entry Coupon has
-        been declined
+        You've chosen not to enter the Confession Room. Your Challenge Entry Coupon has been
+        declined
       </p>
     </motion.div>
   );

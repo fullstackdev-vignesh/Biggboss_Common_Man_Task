@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-A single-page "Bigg Boss Season 10 — Common Man Task" interactive experience: splash → registration → spin-the-wheel challenge → coin flip → entry coupon. Built with Lovable (see `AGENTS.md` — avoid rewriting published git history on the connected branch; commits pushed here sync back into the Lovable editor).
+A single-page "Bigg Boss Season 10 — Task" interactive experience: splash → registration → spin-the-wheel challenge → coin flip → entry coupon. Built with Lovable (see `AGENTS.md` — avoid rewriting published git history on the connected branch; commits pushed here sync back into the Lovable editor).
 
 ## Commands
 

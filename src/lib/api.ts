@@ -93,18 +93,11 @@ export function saveCoinResult(sessionId: string, result: "win" | "lose") {
   });
 }
 
-/** Coin-win "Name + Phone" form submit — mints the claim link token.
- * `lat`/`lng` are the participant's location at the moment of this submit. */
-export function registerClaim(
-  sessionId: string,
-  name: string,
-  phone: string,
-  lat?: number,
-  lng?: number,
-) {
+/** Coin-win "Name + Phone" form submit — mints the claim link token. */
+export function registerClaim(sessionId: string, name: string, phone: string) {
   return request<{ ok: true; claimToken: string }>("/api/claim/register", {
     method: "POST",
-    body: JSON.stringify({ sessionId, name, phone, lat, lng }),
+    body: JSON.stringify({ sessionId, name, phone }),
   });
 }
 
@@ -114,11 +107,6 @@ export function declineClaim(sessionId: string) {
     method: "POST",
     body: JSON.stringify({ sessionId }),
   });
-}
-
-export interface ClaimLocation {
-  lat: number;
-  lng: number;
 }
 
 export interface ClaimInfo {
@@ -131,8 +119,6 @@ export interface ClaimInfo {
   taskCompletedAt: string | null;
   coinFlipCompletedAt: string | null;
   detailsSubmittedAt: string | null;
-  detailsLocationLat: number | null;
-  detailsLocationLng: number | null;
   claimAccepted: boolean;
   claimAcceptedAt: string | null;
   claimLinkDeclined: boolean;
@@ -145,17 +131,16 @@ export function getClaim(token: string) {
 }
 
 /** "Accept" on the claim-link consent page — the only action that reveals the coupon code. */
-export function acceptClaim(token: string, location?: ClaimLocation) {
+export function acceptClaim(token: string) {
   return request<{ ok: true; name: string | null; couponCode: string }>(
     `/api/claim/${token}/accept`,
-    { method: "POST", body: JSON.stringify(location ?? {}) },
+    { method: "POST" },
   );
 }
 
 /** "Decline" on the claim-link consent page — won the coin flip, chose not to claim. */
-export function declineClaimLink(token: string, location?: ClaimLocation) {
+export function declineClaimLink(token: string) {
   return request<{ ok: true; name: string | null }>(`/api/claim/${token}/decline`, {
     method: "POST",
-    body: JSON.stringify(location ?? {}),
   });
 }

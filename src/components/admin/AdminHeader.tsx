@@ -28,7 +28,7 @@ export function AdminHeader({
           className="h-10 w-auto"
         />
         <div>
-          <h1 className="display-font text-2xl gold-text">BIGG BOSS COMMON MAN</h1>
+          <h1 className="display-font text-2xl gold-text">BIGG BOSS</h1>
           <p className="text-sm font-semibold text-foreground">Participant Journey Report</p>
           <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
             Admin Dashboard

@@ -78,15 +78,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Bigg Boss Season 10 — Common Man Task" },
+      { title: "Bigg Boss Season 10 —  Task" },
       {
         name: "description",
-        content: "An interactive Bigg Boss Common Man Task activation experience.",
+        content: "An interactive Bigg Boss  Task activation experience.",
       },
-      { property: "og:title", content: "Bigg Boss Season 10 — Common Man Task" },
+      { property: "og:title", content: "Bigg Boss Season 10 — Task" },
       {
         property: "og:description",
-        content: "An interactive Bigg Boss Common Man Task activation experience.",
+        content: "An interactive Bigg Boss Task activation experience.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

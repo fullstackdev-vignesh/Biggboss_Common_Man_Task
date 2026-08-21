@@ -87,7 +87,7 @@ export async function downloadExcel(rows: ParticipantJourney[]) {
   sheet.mergeCells(1, 1, 1, columnCount);
   sheet.mergeCells(2, 1, 2, columnCount);
   const titleCell = sheet.getCell(1, 1);
-  titleCell.value = "BIGG BOSS COMMON MAN — Participant Journey Report";
+  titleCell.value = "BIGG BOSS — Participant Journey Report";
   titleCell.font = { bold: true, size: 14, color: { argb: EXCEL_GOLD } };
   titleCell.alignment = { horizontal: "center", vertical: "middle" };
   titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: EXCEL_DARK } };
@@ -257,7 +257,7 @@ export async function downloadPdf(rows: ParticipantJourney[]) {
 
   doc.setTextColor(...GOLD);
   doc.setFontSize(16);
-  doc.text("BIGG BOSS COMMON MAN", pageWidth / 2, 44, { align: "center" });
+  doc.text("BIGG BOSS ", pageWidth / 2, 44, { align: "center" });
   doc.setFontSize(10);
   doc.text("Participant Journey Report", pageWidth / 2, 50, { align: "center" });
   doc.setTextColor(...TEXT_LIGHT);
