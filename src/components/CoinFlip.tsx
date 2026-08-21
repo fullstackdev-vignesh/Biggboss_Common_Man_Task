@@ -22,7 +22,7 @@ const faceBase =
   "absolute inset-0 grid place-items-center rounded-full [backface-visibility:hidden] overflow-hidden";
 
 export function CoinFlip({ onResult, onFlipStart, locked }: CoinFlipProps) {
-  const [rotateX, setRotateX] = useState(90);
+  const [rotateX, setRotateX] = useState(50);
   const [flipping, setFlipping] = useState(false);
 
   const flip = () => {

@@ -497,7 +497,7 @@ function ExpiredCard({ name }: { name: string | null }) {
       <p className="mt-4 text-sm text-muted-foreground sm:text-base">
         {/* {name ? `${name}, this` : "This"} claim link was valid for 30 minutes and has expired
         because it wasn't accepted in time. */}
-        The 30-minute validity period has ended, and the claim was not accepted in time.
+        The 5-minute validity period has ended, and the claim was not accepted in time.
       </p>
     </motion.div>
   );

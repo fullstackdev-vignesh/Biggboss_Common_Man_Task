@@ -49,7 +49,7 @@ function CopyChip({
   );
 }
 
-const CLAIM_WINDOW_MS = 30 * 60 * 1000;
+const CLAIM_WINDOW_MS = 5 * 60 * 1000;
 
 function isClaimExpired(p: ParticipantJourney): boolean {
   if (p.claimAccepted || p.claimLinkDeclined) return false;
