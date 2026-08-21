@@ -10,6 +10,8 @@ export const WIN_PROBABILITY = 0.5;
 const FLIP_DURATION = 6; // seconds
 const FULL_FLIPS = 4;
 
+const IDLE_SPIN_DURATION = 20;
+
 /** When true, flip results alternate WIN, TRY AGAIN, WIN, TRY AGAIN...
  * instead of being random. Tracked per-browser via sessionStorage. */
 const ALTERNATE_MODE = "true" === "true";
@@ -68,14 +70,24 @@ export function CoinFlip({ onResult, onFlipStart, locked }: CoinFlipProps) {
         <motion.div
           className="relative aspect-square w-[min(64vw,300px)]"
           style={{ transformStyle: "preserve-3d" }}
-          animate={{
+          // animate={{
+          //   rotateX: flipping ? rotateX : [rotateX, rotateX + 360],
+          //   y: flipping ? [-0, -70, -70, 0] : 0,
+          // }}
+          // transition={{
+          //   rotateX: flipping
+          //     ? { duration: FLIP_DURATION, ease: [0.2, 0.7, 0.15, 1] }
+          //     : { duration: 7, repeat: Infinity, ease: "linear" },
+          //   y: { duration: FLIP_DURATION, ease: "easeInOut", times: [0, 0.2, 0.7, 1] },
+          // }}
+           animate={{
             rotateX: flipping ? rotateX : [rotateX, rotateX + 360],
             y: flipping ? [-0, -70, -70, 0] : 0,
           }}
           transition={{
             rotateX: flipping
               ? { duration: FLIP_DURATION, ease: [0.2, 0.7, 0.15, 1] }
-              : { duration: 7, repeat: Infinity, ease: "linear" },
+              : { duration: IDLE_SPIN_DURATION, repeat: Infinity, ease: "linear" },
             y: { duration: FLIP_DURATION, ease: "easeInOut", times: [0, 0.2, 0.7, 1] },
           }}
         >
