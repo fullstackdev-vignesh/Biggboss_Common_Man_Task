@@ -10,6 +10,17 @@ export const WIN_PROBABILITY = 0.5;
 const FLIP_DURATION = 6; // seconds
 const FULL_FLIPS = 4;
 
+/** When true, flip results alternate WIN, TRY AGAIN, WIN, TRY AGAIN...
+ * instead of being random. Tracked per-browser via sessionStorage. */
+const ALTERNATE_MODE = import.meta.env["VITE_COIN_ALTERNATE_MODE"] === "true";
+const FLIP_COUNT_KEY = "bb-coin-flip-count";
+
+function nextAlternateFace(): CoinFace {
+  const count = Number(sessionStorage.getItem(FLIP_COUNT_KEY) ?? "0") + 1;
+  sessionStorage.setItem(FLIP_COUNT_KEY, String(count));
+  return count % 2 === 1 ? "success" : "retry";
+}
+
 interface CoinFlipProps {
   onResult: (face: CoinFace) => void;
   /** Fires the moment the flip animation begins. */
@@ -27,7 +38,11 @@ export function CoinFlip({ onResult, onFlipStart, locked }: CoinFlipProps) {
 
   const flip = () => {
     if (flipping || locked) return;
-    const face: CoinFace = Math.random() < WIN_PROBABILITY ? "success" : "retry";
+    const face: CoinFace = ALTERNATE_MODE
+      ? nextAlternateFace()
+      : Math.random() < WIN_PROBABILITY
+        ? "success"
+        : "retry";
     setFlipping(true);
     onFlipStart?.();
     playSound("coin-spin");
