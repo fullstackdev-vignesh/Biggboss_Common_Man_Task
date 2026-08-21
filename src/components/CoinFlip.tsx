@@ -12,7 +12,7 @@ const FULL_FLIPS = 4;
 
 /** When true, flip results alternate WIN, TRY AGAIN, WIN, TRY AGAIN...
  * instead of being random. Tracked per-browser via sessionStorage. */
-const ALTERNATE_MODE = import.meta.env["VITE_COIN_ALTERNATE_MODE"] === "true";
+const ALTERNATE_MODE = "true" === "true";
 const FLIP_COUNT_KEY = "bb-coin-flip-count";
 
 function nextAlternateFace(): CoinFace {
@@ -56,12 +56,26 @@ export function CoinFlip({ onResult, onFlipStart, locked }: CoinFlipProps) {
   return (
     <div className="flex flex-col items-center">
       <div className="relative grid place-items-center" style={{ perspective: 1200 }}>
-        <motion.div
+        {/* <motion.div
           className="relative aspect-square w-[min(64vw,300px)]"
           style={{ transformStyle: "preserve-3d" }}
           animate={{ rotateX, y: flipping ? [-0, -70, -70, 0] : 0 }}
           transition={{
             rotateX: { duration: FLIP_DURATION, ease: [0.2, 0.7, 0.15, 1] },
+            y: { duration: FLIP_DURATION, ease: "easeInOut", times: [0, 0.2, 0.7, 1] },
+          }}
+        > */}
+        <motion.div
+          className="relative aspect-square w-[min(64vw,300px)]"
+          style={{ transformStyle: "preserve-3d" }}
+          animate={{
+            rotateX: flipping ? rotateX : [rotateX, rotateX + 360],
+            y: flipping ? [-0, -70, -70, 0] : 0,
+          }}
+          transition={{
+            rotateX: flipping
+              ? { duration: FLIP_DURATION, ease: [0.2, 0.7, 0.15, 1] }
+              : { duration: 7, repeat: Infinity, ease: "linear" },
             y: { duration: FLIP_DURATION, ease: "easeInOut", times: [0, 0.2, 0.7, 1] },
           }}
         >
