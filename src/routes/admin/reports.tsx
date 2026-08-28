@@ -185,7 +185,7 @@ function AdminReportsPage() {
               className="h-28 w-28 sm:h-36 sm:w-36 "
             /> */}
             <img
-              src={import.meta.env.BASE_URL + "smartphone_screen_orientation.svg"}
+              src={import.meta.env.BASE_URL + "images/smartphone_screen_orientation.svg"}
               alt="Rotate device to landscape"
               className="h-28 w-28 sm:h-36 sm:w-36 brightness-0 invert"
             />
