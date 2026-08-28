@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { RotateCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { AdminHeader } from "@/components/admin/AdminHeader";
@@ -10,6 +11,7 @@ import { ReportPagination } from "@/components/admin/ReportPagination";
 import { ReportStats } from "@/components/admin/ReportStats";
 import { ReportToolbar } from "@/components/admin/ReportToolbar";
 import { adminLogout, isAdminAuthed } from "@/hooks/useAdminAuth";
+import { useTabletLandscapeLock } from "@/hooks/useTabletLandscapeLock";
 import { fetchJourneys } from "@/lib/admin/api";
 import { downloadExcel, downloadPdf } from "@/lib/admin/report-export";
 import {
@@ -45,6 +47,7 @@ export const Route = createFileRoute("/admin/reports")({
 });
 
 function AdminReportsPage() {
+  const { isTablet, isPortrait, isLocked, requestLandscape } = useTabletLandscapeLock();
   const navigate = useNavigate();
   const [filters, setFilters] = useState<ReportFilters>(defaultFilters);
   const [searchInput, setSearchInput] = useState("");
@@ -167,6 +170,42 @@ function AdminReportsPage() {
       </div>
 
       <ParticipantDetailsDrawer participant={selected} onClose={() => setSelected(null)} />
+
+      {isTablet && isPortrait && !isLocked && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-6 backdrop-blur-xl"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Rotate your device"
+        >
+          <div className="glass-panel flex max-w-xs flex-col items-center gap-4 rounded-2xl p-6 text-center sm:max-w-sm sm:p-8">
+            {/* <img
+              src={import.meta.env.BASE_URL + "smartphone_screen_orientation.svg"}
+              alt="Rotate device to landscape"
+              className="h-28 w-28 sm:h-36 sm:w-36 "
+            /> */}
+            <img
+              src={import.meta.env.BASE_URL + "smartphone_screen_orientation.svg"}
+              alt="Rotate device to landscape"
+              className="h-28 w-28 sm:h-36 sm:w-36 brightness-0 invert"
+            />
+            <div>
+              <p className="display text-gold text-lg sm:text-xl">Rotate your device</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                For the best report view, switch to landscape mode.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void requestLandscape()}
+              className="btn-gold inline-flex items-center gap-2 px-6 py-3 text-xs"
+            >
+              <RotateCw className="size-4" />
+              View in Landscape
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
