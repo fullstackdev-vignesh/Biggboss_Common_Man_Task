@@ -21,6 +21,18 @@ export function formatTime(iso?: string | null): string {
   }).format(new Date(iso));
 }
 
+/** "2026-08-30" -> "30-Aug-2026" — admin-friendly date for campaign day labels. */
+export function formatCampaignDate(dateStr: string): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: TZ,
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).formatToParts(new Date(`${dateStr}T00:00:00+05:30`));
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  return `${get("day")}-${get("month")}-${get("year")}`;
+}
+
 /** Strips everything but digits, then drops a leading "91" (India country code) so
  *  "+91 98765 45678", "919876545678" and "9876545678" all normalize the same way. */
 export function normalizePhone(phone: string): string {

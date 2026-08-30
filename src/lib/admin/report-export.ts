@@ -4,7 +4,7 @@ import autoTable from "jspdf-autotable";
 
 import type { ParticipantJourney } from "@/types/admin";
 import type { CampaignDaySummary } from "./api";
-import { formatDate, formatTime } from "./format";
+import { formatCampaignDate, formatDate, formatTime } from "./format";
 import { todayKey } from "./report-filters";
 
 const CLAIM_WINDOW_MS = 5 * 60 * 1000;
@@ -96,7 +96,7 @@ const QUOTA_HEADERS = [
 
 function quotaRow(day: CampaignDaySummary, w: CampaignDaySummary["windows"][number]): (string | number)[] {
   return [
-    day.dateStr,
+    formatCampaignDate(day.dateStr),
     `Slot Plan ${day.slotPlan}`,
     w.label,
     `${w.basePercent}%`,

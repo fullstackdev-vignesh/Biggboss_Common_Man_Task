@@ -13,6 +13,7 @@ import { ReportToolbar } from "@/components/admin/ReportToolbar";
 import { adminLogout, isAdminAuthed } from "@/hooks/useAdminAuth";
 import { useTabletLandscapeLock } from "@/hooks/useTabletLandscapeLock";
 import { fetchCampaignDays, fetchJourneys } from "@/lib/admin/api";
+import { formatCampaignDate } from "@/lib/admin/format";
 import { downloadExcel, downloadPdf } from "@/lib/admin/report-export";
 import {
   applyFilters,
@@ -160,7 +161,7 @@ function AdminReportsPage() {
                     className="min-w-[220px] flex-1 rounded-xl border border-border/60 bg-card/40 p-3 text-xs"
                   >
                     <p className="text-sm font-semibold text-primary">
-                      {day.dateStr} · {w.label} · Slot {day.slotPlan}
+                      {formatCampaignDate(day.dateStr)} · {w.label} · Slot {day.slotPlan}
                     </p>
                     <p className="mt-1 text-muted-foreground">
                       {w.basePercent}% · Base {w.baseQuota} · Carry {w.carryIn} · Effective{" "}
