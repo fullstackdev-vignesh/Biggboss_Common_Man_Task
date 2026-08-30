@@ -29,18 +29,19 @@ export function CoinScreen({ sessionId, onFinish, onFormVisibleChange }: CoinScr
     onFormVisibleChange?.(face === "success" && !claimLink);
   }, [face, claimLink, onFormVisibleChange]);
 
-  const handleFlipStart = useCallback(() => {
-    void startCoin(sessionId).catch((err) => console.error("startCoin failed", err));
+  // Decides the outcome server-side (minute-based coupon-quota pacing)
+  // *before* the coin animates, so the coin visually lands on the face that
+  // matches the real, already-decided result.
+  const handleFlipStart = useCallback(async (): Promise<CoinFace> => {
+    const { user } = await startCoin(sessionId);
+    return user.coinResult === "win" ? "success" : "retry";
   }, [sessionId]);
 
   const handleResult = useCallback(
     (result: CoinFace) => {
       setFace(result);
-      saveCoinResult(sessionId, result === "success" ? "win" : "lose")
-        .then(() => {
-          if (result === "success") playSound("win-celebration");
-        })
-        .catch((err) => console.error("saveCoinResult failed", err));
+      if (result === "success") playSound("win-celebration");
+      saveCoinResult(sessionId).catch((err) => console.error("saveCoinResult failed", err));
     },
     [sessionId],
   );

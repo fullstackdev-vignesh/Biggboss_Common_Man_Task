@@ -4,29 +4,17 @@ import { ASSETS } from "@/lib/assets";
 import { playSound } from "@/lib/sound";
 import type { CoinFace } from "@/types";
 
-/** Chance of landing the Bigg Boss (success) face. Tune freely. */
-export const WIN_PROBABILITY = 0.5;
-
 const FLIP_DURATION = 6; // seconds
 const FULL_FLIPS = 4;
 
 const IDLE_SPIN_DURATION = 20;
 
-/** When true, flip results alternate WIN, TRY AGAIN, WIN, TRY AGAIN...
- * instead of being random. Tracked per-browser via sessionStorage. */
-const ALTERNATE_MODE = "true" === "true";
-const FLIP_COUNT_KEY = "bb-coin-flip-count";
-
-function nextAlternateFace(): CoinFace {
-  const count = Number(sessionStorage.getItem(FLIP_COUNT_KEY) ?? "0") + 1;
-  sessionStorage.setItem(FLIP_COUNT_KEY, String(count));
-  return count % 2 === 1 ? "success" : "retry";
-}
-
 interface CoinFlipProps {
   onResult: (face: CoinFace) => void;
-  /** Fires the moment the flip animation begins. */
-  onFlipStart?: () => void;
+  /** Fires when the button is tapped — must resolve to the server-decided
+   * outcome (minute-based coupon-quota pacing) before the flip animates, so
+   * the coin visually lands on the face that matches the real result. */
+  onFlipStart: () => Promise<CoinFace>;
   /** true once a flip has happened — the coin can never be flipped twice */
   locked: boolean;
 }
@@ -37,16 +25,20 @@ const faceBase =
 export function CoinFlip({ onResult, onFlipStart, locked }: CoinFlipProps) {
   const [rotateX, setRotateX] = useState(50);
   const [flipping, setFlipping] = useState(false);
+  const [deciding, setDeciding] = useState(false);
 
-  const flip = () => {
-    if (flipping || locked) return;
-    const face: CoinFace = ALTERNATE_MODE
-      ? nextAlternateFace()
-      : Math.random() < WIN_PROBABILITY
-        ? "success"
-        : "retry";
+  const flip = async () => {
+    if (flipping || deciding || locked) return;
+    setDeciding(true);
+    let face: CoinFace;
+    try {
+      face = await onFlipStart();
+    } catch (err) {
+      console.error("Could not decide coin outcome", err);
+      face = "retry";
+    }
+    setDeciding(false);
     setFlipping(true);
-    onFlipStart?.();
     playSound("coin-spin");
     setRotateX(FULL_FLIPS * 360 + (face === "success" ? 0 : 180));
     window.setTimeout(() => {
@@ -159,11 +151,11 @@ export function CoinFlip({ onResult, onFlipStart, locked }: CoinFlipProps) {
 
       <button
         type="button"
-        onClick={flip}
-        disabled={flipping || locked}
+        onClick={() => void flip()}
+        disabled={flipping || deciding || locked}
         className="btn-gold mt-20 px-10 py-4 text-sm sm:px-14 sm:py-5 sm:text-base"
       >
-        {flipping ? "Flipping…" : "Flip the Coin"}
+        {deciding ? "Please wait…" : flipping ? "Flipping…" : "Flip the Coin"}
       </button>
     </div>
   );

@@ -1,8 +1,8 @@
 import type { BiggUser } from "@/lib/api";
 import type { CoinResult, ParticipantJourney, TaskStatus } from "@/types/admin";
 
-const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "https://backend-bq11.onrender.com";
-// const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "http://localhost:3001";
+// const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "https://backend-bq11.onrender.com";
+const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "http://localhost:3001";
 
 async function request<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`);
@@ -51,6 +51,8 @@ function toJourney(user: BiggUser): ParticipantJourney {
     coinFlipCompletedAt: user.coinFlipCompletedAt ?? null,
     coinResult: toCoinResult(user),
     couponCode: user.claimAccepted ? (user.couponCode ?? null) : null,
+    windowKey: user.windowKey ?? null,
+    slotPlan: user.slotPlanSnapshot ?? null,
     claimToken: user.claimToken ?? null,
     detailsSubmittedAt: user.claimTokenIssuedAt ?? null,
     claimAccepted: user.claimAccepted ?? false,
@@ -77,25 +79,59 @@ export async function fetchJourneys(range: {
   return users.map(toJourney);
 }
 
-export interface ParticipantLimitInfo {
-  configured: boolean;
-  limit: number;
-  usedCount: number;
+export interface CampaignSettings {
+  activeSlot: 1 | 2;
+  dailyCap: number;
 }
 
-/** The participant limit is a single global setting — it applies every day until an admin changes it. */
-export async function fetchParticipantLimit(): Promise<ParticipantLimitInfo> {
-  return request<ParticipantLimitInfo & { ok: true }>("/api/admin/limit");
+/** Active campaign slot plan + the (env-configured, read-only) daily coupon cap. */
+export async function fetchCampaignSettings(): Promise<CampaignSettings> {
+  return request<CampaignSettings & { ok: true }>("/api/admin/settings");
 }
 
-export async function setParticipantLimit(limit: number): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/api/admin/set-limit`, {
+/** Persists the admin's chosen slot plan — applies to every day touched from now on. */
+export async function setActiveCampaignSlot(slot: 1 | 2): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/api/admin/active-slot`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ limit }),
+    body: JSON.stringify({ slot }),
   });
   const body = await res.json().catch(() => null);
   if (!res.ok || !body?.ok) {
-    throw new Error(body?.message ?? "Could not update the participant limit.");
+    throw new Error(body?.message ?? "Could not update the active campaign slot.");
   }
+}
+
+export interface CampaignWindowSummary {
+  windowKey: string;
+  label: string;
+  basePercent: number;
+  baseQuota: number;
+  carryIn: number;
+  effectiveQuota: number;
+  used: number;
+  remaining: number;
+}
+
+export interface CampaignDaySummary {
+  dateStr: string;
+  slotPlan: 1 | 2;
+  dailyCap: number;
+  dailyIssued: number;
+  dailyRemaining: number;
+  windows: CampaignWindowSummary[];
+}
+
+/** Per-date slot/window coupon-quota breakdown — powers the quota panel,
+ * the slot/window report filters, and PDF/Excel exports. */
+export async function fetchCampaignDays(range: {
+  from?: string;
+  to?: string;
+}): Promise<CampaignDaySummary[]> {
+  const from = range.from ?? ALL_TIME_FROM;
+  const to = range.to ?? new Date().toISOString().slice(0, 10);
+  const { days } = await request<{ ok: true; days: CampaignDaySummary[] }>(
+    `/api/admin/campaign-days?start=${from}&end=${to}`,
+  );
+  return days;
 }

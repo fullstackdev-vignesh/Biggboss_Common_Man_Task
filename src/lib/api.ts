@@ -1,5 +1,5 @@
-const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "https://backend-bq11.onrender.com";
-// const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "http://localhost:3001";
+// const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "https://backend-bq11.onrender.com";
+const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "http://localhost:3001";
 
 export class ApiError extends Error {
   constructor(message: string) {
@@ -39,6 +39,8 @@ export interface BiggUser {
   coinFlipStartedAt?: string | null;
   coinFlipCompletedAt?: string | null;
   couponCode?: string | null;
+  windowKey?: string | null;
+  slotPlanSnapshot?: number | null;
   claimToken?: string | null;
   claimTokenIssuedAt?: string | null;
   claimAccepted?: boolean;
@@ -79,6 +81,9 @@ export function rejectSpinner(sessionId: string, activity: string, task: string)
   });
 }
 
+/** The coin outcome is decided here now (server-side, minute-based quota
+ * pacing) — the response's user.coinResult is the authoritative result,
+ * ready before any flip animation plays. */
 export function startCoin(sessionId: string) {
   return request<{ ok: true; user: BiggUser }>("/api/coin/start", {
     method: "POST",
@@ -86,10 +91,12 @@ export function startCoin(sessionId: string) {
   });
 }
 
-export function saveCoinResult(sessionId: string, result: "win" | "lose") {
+/** Called once the flip animation finishes — finalizes completion timestamps
+ * for a result already decided by startCoin. */
+export function saveCoinResult(sessionId: string) {
   return request<{ ok: true; user: BiggUser }>("/api/coin/save", {
     method: "POST",
-    body: JSON.stringify({ sessionId, result }),
+    body: JSON.stringify({ sessionId }),
   });
 }
 

@@ -106,6 +106,7 @@ export function ReportToolbar({
   onChange,
   onReset,
   onExport,
+  timeWindowOptions,
 }: {
   filters: ReportFilters;
   searchInput: string;
@@ -113,6 +114,8 @@ export function ReportToolbar({
   onChange: (patch: Partial<ReportFilters>) => void;
   onReset: () => void;
   onExport: () => void;
+  /** { value: windowKey, label } options for the current date range's active slot plan(s). */
+  timeWindowOptions: { value: string; label: string }[];
 }) {
   return (
     <div className="glass-panel flex flex-col gap-3 rounded-2xl p-4 lg:flex-row lg:items-center">
@@ -206,6 +209,36 @@ export function ReportToolbar({
             <SelectItem value="BETTER_LUCK_NEXT_TIME">Better Luck Next Time</SelectItem>
             <SelectItem value="NOT_ELIGIBLE">Not Eligible</SelectItem>
             <SelectItem value="NOT_FLIPPED">Not Flipped Yet</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={String(filters.slotPlan)}
+          onValueChange={(v) =>
+            onChange({ slotPlan: v === "ALL" ? "ALL" : (Number(v) as 1 | 2), timeWindow: "ALL" })
+          }
+        >
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Campaign Slot" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Slot Plans</SelectItem>
+            <SelectItem value="1">Slot Plan 1</SelectItem>
+            <SelectItem value="2">Slot Plan 2</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={filters.timeWindow} onValueChange={(v) => onChange({ timeWindow: v })}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Time Window" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Time Windows</SelectItem>
+            {timeWindowOptions.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 

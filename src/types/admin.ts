@@ -38,6 +38,8 @@ export interface ParticipantJourney {
   coinFlipCompletedAt?: string | null;
   coinResult?: CoinResult | null;
   couponCode?: string | null;
+  windowKey?: string | null;
+  slotPlan?: number | null;
   claimToken?: string | null;
   detailsSubmittedAt?: string | null;
   claimAccepted?: boolean;

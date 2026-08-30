@@ -4,7 +4,7 @@ import { RotateCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { AdminHeader } from "@/components/admin/AdminHeader";
-import { DailyLimitPanel } from "@/components/admin/DailyLimitPanel";
+import { CampaignQuotaPanel } from "@/components/admin/CampaignQuotaPanel";
 import { ParticipantDetailsDrawer } from "@/components/admin/ParticipantDetailsDrawer";
 import { ParticipantJourneyTable } from "@/components/admin/ParticipantJourneyTable";
 import { ReportPagination } from "@/components/admin/ReportPagination";
@@ -12,7 +12,7 @@ import { ReportStats } from "@/components/admin/ReportStats";
 import { ReportToolbar } from "@/components/admin/ReportToolbar";
 import { adminLogout, isAdminAuthed } from "@/hooks/useAdminAuth";
 import { useTabletLandscapeLock } from "@/hooks/useTabletLandscapeLock";
-import { fetchJourneys } from "@/lib/admin/api";
+import { fetchCampaignDays, fetchJourneys } from "@/lib/admin/api";
 import { downloadExcel, downloadPdf } from "@/lib/admin/report-export";
 import {
   applyFilters,
@@ -70,6 +70,25 @@ function AdminReportsPage() {
     refetchOnWindowFocus: false,
   });
 
+  const campaignDaysQuery = useQuery({
+    queryKey: ["admin-campaign-days-range", range.from, range.to],
+    queryFn: () => fetchCampaignDays(range),
+    refetchOnWindowFocus: false,
+  });
+  const campaignDays = useMemo(() => campaignDaysQuery.data ?? [], [campaignDaysQuery.data]);
+
+  const timeWindowOptions = useMemo(() => {
+    const relevant =
+      filters.slotPlan === "ALL"
+        ? campaignDays
+        : campaignDays.filter((d) => d.slotPlan === filters.slotPlan);
+    const seen = new Map<string, string>();
+    for (const day of relevant) {
+      for (const w of day.windows) seen.set(w.windowKey, w.label);
+    }
+    return Array.from(seen, ([value, label]) => ({ value, label }));
+  }, [campaignDays, filters.slotPlan]);
+
   const all = useMemo(() => query.data ?? [], [query.data]);
   const filtered = useMemo(() => applyFilters(all, filters), [all, filters]);
   const sorted = useMemo(() => sortRows(filtered, sortKey, sortDir), [filtered, sortKey, sortDir]);
@@ -114,14 +133,43 @@ function AdminReportsPage() {
       <div className="mx-auto flex max-w-[1600px] flex-col gap-5">
         <AdminHeader
           onRefresh={() => void query.refetch()}
-          onExportExcel={() => void downloadExcel(sorted)}
-          onExportPdf={() => void downloadPdf(sorted)}
+          onExportExcel={() => void downloadExcel(sorted, campaignDays)}
+          onExportPdf={() => void downloadPdf(sorted, campaignDays)}
           onLogout={handleLogout}
           lastUpdated={query.dataUpdatedAt ? new Date(query.dataUpdatedAt) : null}
           refreshing={query.isFetching}
         />
 
-        <DailyLimitPanel />
+        <CampaignQuotaPanel />
+
+        {campaignDays.length > 0 && (
+          <div className="glass-panel flex flex-col gap-3 rounded-2xl p-4">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">
+              Campaign Window Breakdown
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {campaignDays.flatMap((day) =>
+                day.windows.map((w) => (
+                  <div
+                    key={`${day.dateStr}-${w.windowKey}`}
+                    className="min-w-[220px] flex-1 rounded-xl border border-border/60 bg-card/40 p-3 text-xs"
+                  >
+                    <p className="text-sm font-semibold text-primary">
+                      {day.dateStr} · {w.label} · Slot {day.slotPlan}
+                    </p>
+                    <p className="mt-1 text-muted-foreground">
+                      {w.basePercent}% · Base {w.baseQuota} · Carry {w.carryIn} · Effective{" "}
+                      {w.effectiveQuota}
+                    </p>
+                    <p className="mt-1 text-muted-foreground">
+                      Used {w.used} · Remaining {w.remaining}
+                    </p>
+                  </div>
+                )),
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="flex items-baseline gap-3">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">
@@ -138,7 +186,8 @@ function AdminReportsPage() {
           onSearchInput={setSearchInput}
           onChange={(patch) => setFilters((f) => ({ ...f, ...patch }))}
           onReset={handleReset}
-          onExport={() => void downloadExcel(sorted)}
+          onExport={() => void downloadExcel(sorted, campaignDays)}
+          timeWindowOptions={timeWindowOptions}
         />
 
         <p className="text-sm text-muted-foreground">

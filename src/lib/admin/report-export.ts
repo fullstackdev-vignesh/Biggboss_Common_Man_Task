@@ -3,6 +3,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 import type { ParticipantJourney } from "@/types/admin";
+import type { CampaignDaySummary } from "./api";
 import { formatDate, formatTime } from "./format";
 import { todayKey } from "./report-filters";
 
@@ -42,6 +43,8 @@ const EXCEL_HEADERS = [
   "Task Status At",
   "Coin Result",
   "Coin Flip At",
+  "Slot Plan",
+  "Time Window",
   "Consent Link Sent At",
   "Consent Acknowledgement",
   "Coupon Claim",
@@ -65,6 +68,8 @@ function excelRow(p: ParticipantJourney, index: number): (string | number)[] {
     excelStamp(p.taskCompletedAt ?? p.taskFailedAt),
     p.coinResult ?? "NOT_FLIPPED",
     excelStamp(p.coinFlipCompletedAt),
+    p.slotPlan ?? "",
+    p.windowKey ?? "",
     p.claimToken ? excelStamp(p.detailsSubmittedAt) : "",
     consentAcknowledgementText(p),
     couponClaimText(p),
@@ -77,8 +82,46 @@ const EXCEL_ROW_DARK = "FF1E170D";
 const EXCEL_TEXT_LIGHT = "FFE6DCC8";
 const EXCEL_BORDER = "FF3C3018";
 
-export async function downloadExcel(rows: ParticipantJourney[]) {
+const QUOTA_HEADERS = [
+  "Date",
+  "Slot Plan",
+  "Time Window",
+  "Base %",
+  "Base Quota",
+  "Carry-Forward",
+  "Effective Quota",
+  "Issued/Used",
+  "Remaining",
+];
+
+function quotaRow(day: CampaignDaySummary, w: CampaignDaySummary["windows"][number]): (string | number)[] {
+  return [
+    day.dateStr,
+    `Slot Plan ${day.slotPlan}`,
+    w.label,
+    `${w.basePercent}%`,
+    w.baseQuota,
+    w.carryIn,
+    w.effectiveQuota,
+    w.used,
+    w.remaining,
+  ];
+}
+
+export async function downloadExcel(rows: ParticipantJourney[], campaignDays: CampaignDaySummary[] = []) {
   const workbook = new ExcelJS.Workbook();
+
+  if (campaignDays.length > 0) {
+    const quotaSheet = workbook.addWorksheet("Campaign Slot & Window Quota");
+    quotaSheet.addRow(QUOTA_HEADERS).font = { bold: true };
+    for (const day of campaignDays) {
+      for (const w of day.windows) quotaSheet.addRow(quotaRow(day, w));
+    }
+    quotaSheet.columns.forEach((col, i) => {
+      col.width = Math.max(14, Math.min(28, (QUOTA_HEADERS[i] ?? "").length + 6));
+    });
+  }
+
   const sheet = workbook.addWorksheet("Participant Journey Report", {
     views: [{ state: "frozen", ySplit: 4 }],
   });
@@ -163,6 +206,7 @@ const PDF_HEADERS = [
   "Wheel",
   "Task Status",
   "Coin Result",
+  "Slot/Window",
   "Consent Link",
   "Consent Acknowledgement",
   "Coupon Claim",
@@ -193,6 +237,8 @@ function pdfRow(p: ParticipantJourney, index: number): string[] {
     ? `${couponClaimText(p)}\n${stamp(p.claimAcceptedAt)}`
     : couponClaimText(p);
 
+  const slotWindow = p.slotPlan && p.windowKey ? `Slot ${p.slotPlan}\n${p.windowKey}` : "—";
+
   return [
     String(index),
     `${p.name?.trim() || "Guest"}\n${p.phone || "—"}`,
@@ -200,6 +246,7 @@ function pdfRow(p: ParticipantJourney, index: number): string[] {
     wheel,
     taskStatus,
     coinResult,
+    slotWindow,
     consentLink,
     acknowledgement,
     couponClaim,
@@ -234,7 +281,7 @@ function paintPageBackground(doc: jsPDF) {
   doc.rect(0, 0, pageWidth, pageHeight, "F");
 }
 
-export async function downloadPdf(rows: ParticipantJourney[]) {
+export async function downloadPdf(rows: ParticipantJourney[], campaignDays: CampaignDaySummary[] = []) {
   const doc = new jsPDF({ orientation: "landscape" });
   const pageWidth = doc.internal.pageSize.getWidth();
   paintPageBackground(doc);
@@ -266,10 +313,34 @@ export async function downloadPdf(rows: ParticipantJourney[]) {
     align: "center",
   });
 
+  let tableStartY = 62;
+
+  if (campaignDays.length > 0) {
+    autoTable(doc, {
+      head: [QUOTA_HEADERS],
+      body: campaignDays.flatMap((day) => day.windows.map((w) => quotaRow(day, w))),
+      startY: tableStartY,
+      theme: "grid",
+      styles: {
+        fontSize: 7.5,
+        cellPadding: 2.5,
+        fillColor: ROW_DARK,
+        textColor: TEXT_LIGHT,
+        lineColor: BORDER,
+        lineWidth: 0.2,
+      },
+      headStyles: { fillColor: GOLD, textColor: BG_DARK, fontStyle: "bold", halign: "center" },
+      alternateRowStyles: { fillColor: BG_DARK },
+      margin: { top: 10 },
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tableStartY = (doc as any).lastAutoTable.finalY + 8;
+  }
+
   autoTable(doc, {
     head: [PDF_HEADERS],
     body: rows.map((p, i) => pdfRow(p, i + 1)),
-    startY: 62,
+    startY: tableStartY,
     theme: "grid",
     styles: {
       fontSize: 7.5,

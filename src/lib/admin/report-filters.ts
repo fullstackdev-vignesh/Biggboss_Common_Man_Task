@@ -30,6 +30,8 @@ export interface ReportFilters {
     | "BETTER_LUCK_NEXT_TIME"
     | "NOT_ELIGIBLE"
     | "NOT_FLIPPED";
+  slotPlan: "ALL" | 1 | 2;
+  timeWindow: "ALL" | string;
 }
 
 const TZ = "Asia/Kolkata";
@@ -62,6 +64,8 @@ export function defaultFilters(): ReportFilters {
     taskStatus: "ALL",
     category: "ALL",
     coinResult: "ALL",
+    slotPlan: "ALL",
+    timeWindow: "ALL",
   };
 }
 
@@ -113,6 +117,10 @@ export function applyFilters(rows: ParticipantJourney[], f: ReportFilters): Part
       const result = p.coinResult ?? "NOT_FLIPPED";
       if (result !== f.coinResult) return false;
     }
+
+    if (f.slotPlan !== "ALL" && p.slotPlan !== f.slotPlan) return false;
+
+    if (f.timeWindow !== "ALL" && p.windowKey !== f.timeWindow) return false;
 
     return true;
   });
