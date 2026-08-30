@@ -109,16 +109,22 @@ export interface CampaignWindowSummary {
   baseQuota: number;
   carryIn: number;
   effectiveQuota: number;
+  /** Reserved the moment a coin win is decided — prevents overselling while a claim is pending. */
   used: number;
   remaining: number;
+  /** Consent letter actually Accepted — the real business number. */
+  confirmed: number;
 }
 
 export interface CampaignDaySummary {
   dateStr: string;
   slotPlan: 1 | 2;
   dailyCap: number;
+  /** Reserved the moment a coin win is decided — prevents overselling while a claim is pending. */
   dailyIssued: number;
   dailyRemaining: number;
+  /** Consent letter actually Accepted — the real business number. */
+  dailyConfirmed: number;
   windows: CampaignWindowSummary[];
 }
 

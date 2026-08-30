@@ -71,7 +71,12 @@ function AdminReportsPage() {
   });
 
   const campaignDaysQuery = useQuery({
-    queryKey: ["admin-campaign-days-range", range.from, range.to],
+    // Shares the "admin-campaign-days" prefix with CampaignQuotaPanel's own
+    // query so that panel's slot-switch invalidation (a prefix match) also
+    // refreshes this Window Breakdown panel — they were on different keys
+    // before, so switching the slot updated the top stat cards but left
+    // this breakdown showing the stale plan.
+    queryKey: ["admin-campaign-days", "range", range.from, range.to],
     queryFn: () => fetchCampaignDays(range),
     refetchOnWindowFocus: false,
   });
@@ -161,8 +166,8 @@ function AdminReportsPage() {
                       {w.basePercent}% · Base {w.baseQuota} · Carry {w.carryIn} · Effective{" "}
                       {w.effectiveQuota}
                     </p>
-                    <p className="mt-1 text-muted-foreground">
-                      Used {w.used} · Remaining {w.remaining}
+                    <p className="mt-1 text-primary/80">
+                      Confirmed (Accepted) {w.used} · Remaining {w.remaining}
                     </p>
                   </div>
                 )),

@@ -30,8 +30,10 @@ export function CampaignQuotaPanel() {
 
   const todaySummary = daysQuery.data?.[0];
   const dailyCap = settingsQuery.data?.dailyCap ?? todaySummary?.dailyCap ?? 0;
-  const issued = todaySummary?.dailyIssued ?? 0;
-  const remaining = todaySummary?.dailyRemaining ?? Math.max(dailyCap - issued, 0);
+  // dailyIssued is only ever incremented at consent-accept time (see
+  // acceptClaim) — it IS the confirmed count, not a separate "reserved" figure.
+  const confirmed = todaySummary?.dailyIssued ?? 0;
+  const confirmedRemaining = todaySummary?.dailyRemaining ?? Math.max(dailyCap - confirmed, 0);
   const activeSlot = settingsQuery.data?.activeSlot ?? 1;
 
   async function handleSelectSlot(slot: 1 | 2) {
@@ -71,15 +73,16 @@ export function CampaignQuotaPanel() {
           <TicketCheck className="mt-0.5 size-5 shrink-0 text-amber" />
           <div>
             <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
-              Coupons Issued
+              Coupons Confirmed
             </p>
             {loading ? (
               <div className="shimmer mt-2 h-6 w-16 rounded" />
             ) : (
               <p className="display-font mt-1 text-2xl gold-text">
-                {issued} / {dailyCap}
+                {confirmed} / {dailyCap}
               </p>
             )}
+            <p className="mt-0.5 text-[10px] text-muted-foreground">Consent letter accepted</p>
           </div>
         </div>
         <div className="flex items-start gap-2">
@@ -91,7 +94,7 @@ export function CampaignQuotaPanel() {
             {loading ? (
               <div className="shimmer mt-2 h-6 w-16 rounded" />
             ) : (
-              <p className="display-font mt-1 text-2xl gold-text">{remaining}</p>
+              <p className="display-font mt-1 text-2xl gold-text">{confirmedRemaining}</p>
             )}
           </div>
         </div>

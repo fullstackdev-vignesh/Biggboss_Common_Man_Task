@@ -90,7 +90,7 @@ const QUOTA_HEADERS = [
   "Base Quota",
   "Carry-Forward",
   "Effective Quota",
-  "Issued/Used",
+  "Confirmed (Accepted)",
   "Remaining",
 ];
 
