@@ -5,9 +5,31 @@ import autoTable from "jspdf-autotable";
 import type { ParticipantJourney } from "@/types/admin";
 import type { CampaignDaySummary } from "./api";
 import { formatCampaignDate, formatDate, formatTime } from "./format";
-import { todayKey } from "./report-filters";
+import { istDayKey, istHourOf, todayKey } from "./report-filters";
 
 const CLAIM_WINDOW_MS = 5 * 60 * 1000;
+
+/** Every participant's Slot Plan + Time Window for the export — not just
+ * accepted coupon winners (the stored `windowKey`/`slotPlan` fields only
+ * ever get set at consent-accept time). Derived from their own wheel-spin
+ * time against that date's real campaign windows, same as the on-screen
+ * Time Window filter, so exported rows line up with whatever the admin just
+ * filtered by. */
+function deriveSlotWindow(
+  p: ParticipantJourney,
+  campaignDays: CampaignDaySummary[],
+): { slotPlan: number | null; label: string | null } {
+  const spinTime = p.wheelSpinCompletedAt ?? p.wheelSpinStartedAt;
+  if (!spinTime) return { slotPlan: null, label: null };
+  const day = campaignDays.find((d) => d.dateStr === istDayKey(spinTime));
+  if (!day) return { slotPlan: null, label: null };
+  const hour = istHourOf(spinTime);
+  const win = day.windows.find((w) => {
+    const [start, end] = w.windowKey.split("-").map(Number);
+    return hour >= start && hour < end;
+  });
+  return win ? { slotPlan: win.slotPlan, label: win.label } : { slotPlan: null, label: null };
+}
 
 function isClaimExpired(p: ParticipantJourney): boolean {
   if (p.claimAccepted || p.claimLinkDeclined) return false;
@@ -55,7 +77,12 @@ function excelStamp(iso?: string | null): string {
   return `${formatDate(iso)}\n${formatTime(iso)}`;
 }
 
-function excelRow(p: ParticipantJourney, index: number): (string | number)[] {
+function excelRow(
+  p: ParticipantJourney,
+  index: number,
+  campaignDays: CampaignDaySummary[],
+): (string | number)[] {
+  const slotWindow = deriveSlotWindow(p, campaignDays);
   return [
     index,
     p.id,
@@ -68,8 +95,8 @@ function excelRow(p: ParticipantJourney, index: number): (string | number)[] {
     excelStamp(p.taskCompletedAt ?? p.taskFailedAt),
     p.coinResult ?? "NOT_FLIPPED",
     excelStamp(p.coinFlipCompletedAt),
-    p.slotPlan ?? "",
-    p.windowKey ?? "",
+    slotWindow.slotPlan ? `Slot ${slotWindow.slotPlan}` : "",
+    slotWindow.label ?? "",
     p.claimToken ? excelStamp(p.detailsSubmittedAt) : "",
     consentAcknowledgementText(p),
     couponClaimText(p),
@@ -108,7 +135,11 @@ function quotaRow(day: CampaignDaySummary, w: CampaignDaySummary["windows"][numb
   ];
 }
 
-export async function downloadExcel(rows: ParticipantJourney[], campaignDays: CampaignDaySummary[] = []) {
+export async function downloadExcel(
+  rows: ParticipantJourney[],
+  campaignDays: CampaignDaySummary[] = [],
+  windowLabel?: string,
+) {
   const workbook = new ExcelJS.Workbook();
 
   if (campaignDays.length > 0) {
@@ -136,7 +167,7 @@ export async function downloadExcel(rows: ParticipantJourney[], campaignDays: Ca
   titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: EXCEL_DARK } };
 
   const subtitleCell = sheet.getCell(2, 1);
-  subtitleCell.value = `Generated on ${formatDate(new Date().toISOString())}`;
+  subtitleCell.value = `Generated on ${formatDate(new Date().toISOString())}${windowLabel ? ` (${windowLabel})` : ""}`;
   subtitleCell.font = { size: 10, color: { argb: EXCEL_TEXT_LIGHT } };
   subtitleCell.alignment = { horizontal: "center", vertical: "middle" };
   subtitleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: EXCEL_DARK } };
@@ -164,7 +195,7 @@ export async function downloadExcel(rows: ParticipantJourney[], campaignDays: Ca
   headerRow.height = 28;
 
   rows.forEach((p, i) => {
-    const row = sheet.addRow(excelRow(p, i + 1));
+    const row = sheet.addRow(excelRow(p, i + 1, campaignDays));
     const shade = i % 2 === 0 ? EXCEL_ROW_DARK : EXCEL_DARK;
     row.eachCell((c) => {
       c.font = { color: { argb: EXCEL_TEXT_LIGHT } };
@@ -217,7 +248,7 @@ function stamp(iso?: string | null): string {
   return `${formatDate(iso)}\n${formatTime(iso)}`;
 }
 
-function pdfRow(p: ParticipantJourney, index: number): string[] {
+function pdfRow(p: ParticipantJourney, index: number, campaignDays: CampaignDaySummary[]): string[] {
   const wheel = p.wheelCategory
     ? `${p.wheelCategory}\n${stamp(p.wheelSpinStartedAt ?? p.wheelSpinCompletedAt)}`
     : "—";
@@ -237,7 +268,8 @@ function pdfRow(p: ParticipantJourney, index: number): string[] {
     ? `${couponClaimText(p)}\n${stamp(p.claimAcceptedAt)}`
     : couponClaimText(p);
 
-  const slotWindow = p.slotPlan && p.windowKey ? `Slot ${p.slotPlan}\n${p.windowKey}` : "—";
+  const derived = deriveSlotWindow(p, campaignDays);
+  const slotWindow = derived.slotPlan ? `Slot ${derived.slotPlan}\n${derived.label}` : "—";
 
   return [
     String(index),
@@ -281,7 +313,11 @@ function paintPageBackground(doc: jsPDF) {
   doc.rect(0, 0, pageWidth, pageHeight, "F");
 }
 
-export async function downloadPdf(rows: ParticipantJourney[], campaignDays: CampaignDaySummary[] = []) {
+export async function downloadPdf(
+  rows: ParticipantJourney[],
+  campaignDays: CampaignDaySummary[] = [],
+  windowLabel?: string,
+) {
   const doc = new jsPDF({ orientation: "landscape" });
   const pageWidth = doc.internal.pageSize.getWidth();
   paintPageBackground(doc);
@@ -309,9 +345,12 @@ export async function downloadPdf(rows: ParticipantJourney[], campaignDays: Camp
   doc.text("Participant Journey Report", pageWidth / 2, 50, { align: "center" });
   doc.setTextColor(...TEXT_LIGHT);
   doc.setFontSize(8);
-  doc.text(`Generated on ${formatDate(new Date().toISOString())}`, pageWidth / 2, 56, {
-    align: "center",
-  });
+  doc.text(
+    `Generated on ${formatDate(new Date().toISOString())}${windowLabel ? ` (${windowLabel})` : ""}`,
+    pageWidth / 2,
+    56,
+    { align: "center" },
+  );
 
   let tableStartY = 62;
 
@@ -339,7 +378,7 @@ export async function downloadPdf(rows: ParticipantJourney[], campaignDays: Camp
 
   autoTable(doc, {
     head: [PDF_HEADERS],
-    body: rows.map((p, i) => pdfRow(p, i + 1)),
+    body: rows.map((p, i) => pdfRow(p, i + 1, campaignDays)),
     startY: tableStartY,
     theme: "grid",
     styles: {

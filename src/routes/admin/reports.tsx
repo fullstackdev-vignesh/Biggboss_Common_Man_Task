@@ -96,6 +96,11 @@ function AdminReportsPage() {
     return Array.from(seen, ([value, label]) => ({ value, label }));
   }, [campaignDays, filters.slotPlan]);
 
+  const selectedWindowLabel = useMemo(
+    () => timeWindowOptions.find((o) => o.value === filters.timeWindow)?.label,
+    [timeWindowOptions, filters.timeWindow],
+  );
+
   const all = useMemo(() => query.data ?? [], [query.data]);
   const filtered = useMemo(() => applyFilters(all, filters), [all, filters]);
   const sorted = useMemo(() => sortRows(filtered, sortKey, sortDir), [filtered, sortKey, sortDir]);
@@ -140,8 +145,8 @@ function AdminReportsPage() {
       <div className="mx-auto flex max-w-[1600px] flex-col gap-5">
         <AdminHeader
           onRefresh={() => void query.refetch()}
-          onExportExcel={() => void downloadExcel(sorted, campaignDays)}
-          onExportPdf={() => void downloadPdf(sorted, campaignDays)}
+          onExportExcel={() => void downloadExcel(sorted, campaignDays, selectedWindowLabel)}
+          onExportPdf={() => void downloadPdf(sorted, campaignDays, selectedWindowLabel)}
           onLogout={handleLogout}
           lastUpdated={query.dataUpdatedAt ? new Date(query.dataUpdatedAt) : null}
           refreshing={query.isFetching}
@@ -193,7 +198,7 @@ function AdminReportsPage() {
           onSearchInput={setSearchInput}
           onChange={(patch) => setFilters((f) => ({ ...f, ...patch }))}
           onReset={handleReset}
-          onExport={() => void downloadExcel(sorted, campaignDays)}
+          onExport={() => void downloadExcel(sorted, campaignDays, selectedWindowLabel)}
           timeWindowOptions={timeWindowOptions}
         />
 

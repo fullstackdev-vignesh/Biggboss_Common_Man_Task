@@ -51,6 +51,30 @@ export function todayKey(): string {
   return istDayKey(new Date());
 }
 
+/** 0-23 hour-of-day in Asia/Kolkata for a given instant. */
+export function istHourOf(iso: string): number {
+  const hourStr = new Intl.DateTimeFormat("en-GB", {
+    timeZone: TZ,
+    hour: "2-digit",
+    hour12: false,
+  }).format(new Date(iso));
+  return Number(hourStr) % 24;
+}
+
+/** Time Window filter bucket: every participant (guest, task-failed,
+ * coin-lose, coupon-declined — not just accepted winners) by their OWN
+ * wheel-spin time, not the `windowKey` field (which only accepted coupon
+ * winners ever get). `windowKey` here is the filter value, e.g. "12-16". */
+function matchesTimeWindow(p: ParticipantJourney, windowKey: string): boolean {
+  const spinTime = p.wheelSpinCompletedAt ?? p.wheelSpinStartedAt;
+  if (!spinTime) return false;
+  const [startStr, endStr] = windowKey.split("-");
+  const start = Number(startStr);
+  const end = Number(endStr);
+  const hour = istHourOf(spinTime);
+  return hour >= start && hour < end;
+}
+
 function shiftKey(days: number): string {
   return istDayKey(new Date(Date.now() + days * 86400000));
 }
@@ -120,7 +144,7 @@ export function applyFilters(rows: ParticipantJourney[], f: ReportFilters): Part
 
     if (f.slotPlan !== "ALL" && p.slotPlan !== f.slotPlan) return false;
 
-    if (f.timeWindow !== "ALL" && p.windowKey !== f.timeWindow) return false;
+    if (f.timeWindow !== "ALL" && !matchesTimeWindow(p, f.timeWindow)) return false;
 
     return true;
   });
