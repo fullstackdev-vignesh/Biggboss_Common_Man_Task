@@ -97,7 +97,7 @@ const QUOTA_HEADERS = [
 function quotaRow(day: CampaignDaySummary, w: CampaignDaySummary["windows"][number]): (string | number)[] {
   return [
     formatCampaignDate(day.dateStr),
-    `Slot Plan ${day.slotPlan}`,
+    `Slot Plan ${w.slotPlan}`,
     w.label,
     `${w.basePercent}%`,
     w.baseQuota,

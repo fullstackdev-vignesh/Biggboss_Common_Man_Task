@@ -84,13 +84,14 @@ function AdminReportsPage() {
   const campaignDays = useMemo(() => campaignDaysQuery.data ?? [], [campaignDaysQuery.data]);
 
   const timeWindowOptions = useMemo(() => {
-    const relevant =
-      filters.slotPlan === "ALL"
-        ? campaignDays
-        : campaignDays.filter((d) => d.slotPlan === filters.slotPlan);
+    // Filtered at the window level, not the day level — a day can mix plans
+    // if admin switched mid-day, so a window's own slotPlan is what matters.
     const seen = new Map<string, string>();
-    for (const day of relevant) {
-      for (const w of day.windows) seen.set(w.windowKey, w.label);
+    for (const day of campaignDays) {
+      for (const w of day.windows) {
+        if (filters.slotPlan !== "ALL" && w.slotPlan !== filters.slotPlan) continue;
+        seen.set(w.windowKey, w.label);
+      }
     }
     return Array.from(seen, ([value, label]) => ({ value, label }));
   }, [campaignDays, filters.slotPlan]);
@@ -161,7 +162,7 @@ function AdminReportsPage() {
                     className="min-w-[220px] flex-1 rounded-xl border border-border/60 bg-card/40 p-3 text-xs"
                   >
                     <p className="text-sm font-semibold text-primary">
-                      {formatCampaignDate(day.dateStr)} · {w.label} · Slot {day.slotPlan}
+                      {formatCampaignDate(day.dateStr)} · {w.label} · Slot {w.slotPlan}
                     </p>
                     <p className="mt-1 text-muted-foreground">
                       {w.basePercent}% · Base {w.baseQuota} · Carry {w.carryIn} · Effective{" "}

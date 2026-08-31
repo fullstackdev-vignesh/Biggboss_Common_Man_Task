@@ -105,6 +105,10 @@ export async function setActiveCampaignSlot(slot: 1 | 2): Promise<void> {
 export interface CampaignWindowSummary {
   windowKey: string;
   label: string;
+  /** The plan active when THIS window was first reached — a day can mix
+   * plans if admin switches mid-day, so this can differ from the day's
+   * current `slotPlan`. */
+  slotPlan: 1 | 2;
   basePercent: number;
   baseQuota: number;
   carryIn: number;
@@ -118,6 +122,7 @@ export interface CampaignWindowSummary {
 
 export interface CampaignDaySummary {
   dateStr: string;
+  /** The plan currently governing the rest of this day — see each window's own `slotPlan` for its history. */
   slotPlan: 1 | 2;
   dailyCap: number;
   /** Reserved the moment a coin win is decided — prevents overselling while a claim is pending. */
