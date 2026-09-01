@@ -12,6 +12,7 @@ import { ReportStats } from "@/components/admin/ReportStats";
 import { ReportToolbar } from "@/components/admin/ReportToolbar";
 import { adminLogout, isAdminAuthed } from "@/hooks/useAdminAuth";
 import { useTabletLandscapeLock } from "@/hooks/useTabletLandscapeLock";
+import { isSlotBasedBusiness } from "@/lib/business-mode";
 import { fetchCampaignDays, fetchJourneys } from "@/lib/admin/api";
 import { formatCampaignDate } from "@/lib/admin/format";
 import { downloadExcel, downloadPdf } from "@/lib/admin/report-export";
@@ -50,6 +51,7 @@ export const Route = createFileRoute("/admin/reports")({
 function AdminReportsPage() {
   const { isTablet, isPortrait, isLocked, requestLandscape } = useTabletLandscapeLock();
   const navigate = useNavigate();
+  const slotBased = isSlotBasedBusiness();
   const [filters, setFilters] = useState<ReportFilters>(defaultFilters);
   const [searchInput, setSearchInput] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("registeredAt");
@@ -86,6 +88,7 @@ function AdminReportsPage() {
   const timeWindowOptions = useMemo(() => {
     // Filtered at the window level, not the day level — a day can mix plans
     // if admin switched mid-day, so a window's own slotPlan is what matters.
+    if (!slotBased) return [];
     const seen = new Map<string, string>();
     for (const day of campaignDays) {
       for (const w of day.windows) {
@@ -154,7 +157,7 @@ function AdminReportsPage() {
 
         <CampaignQuotaPanel />
 
-        {campaignDays.length > 0 && (
+        {slotBased && campaignDays.length > 0 && (
           <div className="glass-panel flex flex-col gap-3 rounded-2xl p-4">
             <p className="text-xs uppercase tracking-widest text-muted-foreground">
               Campaign Window Breakdown
@@ -200,6 +203,7 @@ function AdminReportsPage() {
           onReset={handleReset}
           onExport={() => void downloadExcel(sorted, campaignDays, selectedWindowLabel)}
           timeWindowOptions={timeWindowOptions}
+          slotBased={slotBased}
         />
 
         <p className="text-sm text-muted-foreground">

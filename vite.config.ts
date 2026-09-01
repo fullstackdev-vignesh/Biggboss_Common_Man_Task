@@ -20,10 +20,13 @@ export default defineConfig({
     preset: isVercel ? "vercel" : "node_server",
   },
   vite: isVercel
-    ? {}
+    ? {
+        envPrefix: ["VITE_", "NEXT_PUBLIC_"],
+      }
     : {
         // DigitalOcean / PM2 / Nginx deployment — served under /bcm/ behind Nginx.
         base: "/bcm/",
+        envPrefix: ["VITE_", "NEXT_PUBLIC_"],
         server: {
           host: "0.0.0.0",
           port: 8080,

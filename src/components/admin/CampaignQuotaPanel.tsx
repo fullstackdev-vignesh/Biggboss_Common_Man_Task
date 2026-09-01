@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { isSlotBasedBusiness } from "@/lib/business-mode";
 import {
   fetchCampaignDays,
   fetchCampaignSettings,
@@ -14,6 +15,7 @@ import { todayKey } from "@/lib/admin/report-filters";
 export function CampaignQuotaPanel() {
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
+  const slotBased = isSlotBasedBusiness();
 
   const settingsQuery = useQuery({
     queryKey: ["admin-campaign-settings"],
@@ -52,6 +54,8 @@ export function CampaignQuotaPanel() {
   }
 
   const loading = settingsQuery.isLoading || daysQuery.isLoading;
+
+  if (!slotBased) return null;
 
   return (
     <div className="glass-panel flex flex-col gap-4 rounded-2xl p-4 lg:flex-row lg:items-center lg:justify-between">

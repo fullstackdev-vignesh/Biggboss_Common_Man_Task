@@ -1,4 +1,5 @@
 import { finalStatusOf, type ParticipantJourney } from "@/types/admin";
+import { isSlotBasedBusiness } from "@/lib/business-mode";
 import { normalizePhone } from "./format";
 
 export type DatePreset =
@@ -118,6 +119,11 @@ export function applyFilters(rows: ParticipantJourney[], f: ReportFilters): Part
   const term = f.search.trim().toLowerCase();
   const phoneTerm = normalizePhone(f.search);
   const searchIsPhone = phoneTerm.length >= 2 && /\d/.test(f.search);
+  // Slot/window filters are slot-specific UI; when the backend runs the
+  // non-slot business mode they are hidden, so they must never filter rows.
+  const slotFiltering = isSlotBasedBusiness()
+    ? { slotPlan: f.slotPlan, timeWindow: f.timeWindow }
+    : { slotPlan: "ALL" as const, timeWindow: "ALL" as const };
 
   return rows.filter((p) => {
     const key = istDayKey(p.registeredAt);
@@ -142,9 +148,10 @@ export function applyFilters(rows: ParticipantJourney[], f: ReportFilters): Part
       if (result !== f.coinResult) return false;
     }
 
-    if (f.slotPlan !== "ALL" && p.slotPlan !== f.slotPlan) return false;
+    if (slotFiltering.slotPlan !== "ALL" && p.slotPlan !== slotFiltering.slotPlan) return false;
 
-    if (f.timeWindow !== "ALL" && !matchesTimeWindow(p, f.timeWindow)) return false;
+    if (slotFiltering.timeWindow !== "ALL" && !matchesTimeWindow(p, slotFiltering.timeWindow))
+      return false;
 
     return true;
   });
