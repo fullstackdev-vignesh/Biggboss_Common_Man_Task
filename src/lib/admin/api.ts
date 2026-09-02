@@ -1,11 +1,13 @@
 import type { BiggUser } from "@/lib/api";
 import type { CoinResult, ParticipantJourney, TaskStatus } from "@/types/admin";
 
-const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "https://backend-bq11.onrender.com";
-// const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "http://localhost:3001";
+const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "http://localhost:3001";
 
-async function request<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}${path}`);
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers: { "Content-Type": "application/json", ...init?.headers },
+  });
   const body = await res.json().catch(() => null);
   if (!res.ok || !body?.ok) {
     throw new Error(body?.message ?? "Something went wrong. Please try again.");
@@ -19,9 +21,6 @@ function toTaskStatus(spinnerStatus: BiggUser["spinnerStatus"]): TaskStatus {
   return "PENDING";
 }
 
-// A coin win only becomes "COUPON" once the participant has opened their
-// claim link, ticked "I Accept" and submitted — until then it's pending,
-// and the coupon code stays hidden (see the claim-link flow in api.ts).
 function toCoinResult(user: BiggUser): CoinResult {
   if (user.coinResult === "win") {
     if (user.claimDeclined) return "NOT_INTERESTED";
@@ -61,10 +60,13 @@ function toJourney(user: BiggUser): ParticipantJourney {
     claimLinkDeclined: user.claimLinkDeclined ?? false,
     claimLinkDeclinedAt: user.claimLinkDeclinedAt ?? null,
     completedAt: user.completedAt ?? null,
+
+    signatureUrl: user.signatureUrl ?? null,
+    consentPdfKey: user.consentPdfKey ?? null,
+    consentPdfUrl: user.consentPdfUrl ?? null,
   };
 }
 
-/** "All Time" has no natural range for the backend's dateStr index, so span from a safe epoch to today. */
 const ALL_TIME_FROM = "2000-01-01";
 
 export async function fetchJourneys(range: {
@@ -84,57 +86,40 @@ export interface CampaignSettings {
   dailyCap: number;
 }
 
-/** Active campaign slot plan + the (env-configured, read-only) daily coupon cap. */
 export async function fetchCampaignSettings(): Promise<CampaignSettings> {
   return request<CampaignSettings & { ok: true }>("/api/admin/settings");
 }
 
-/** Persists the admin's chosen slot plan — applies to every day touched from now on. */
 export async function setActiveCampaignSlot(slot: 1 | 2): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/api/admin/active-slot`, {
+  await request<{ ok: true; activeSlot: 1 | 2 }>("/api/admin/active-slot", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ slot }),
   });
-  const body = await res.json().catch(() => null);
-  if (!res.ok || !body?.ok) {
-    throw new Error(body?.message ?? "Could not update the active campaign slot.");
-  }
 }
 
 export interface CampaignWindowSummary {
   windowKey: string;
   label: string;
-  /** The plan active when THIS window was first reached — a day can mix
-   * plans if admin switches mid-day, so this can differ from the day's
-   * current `slotPlan`. */
   slotPlan: 1 | 2;
   basePercent: number;
   baseQuota: number;
   carryIn: number;
   effectiveQuota: number;
-  /** Reserved the moment a coin win is decided — prevents overselling while a claim is pending. */
   used: number;
   remaining: number;
-  /** Consent letter actually Accepted — the real business number. */
   confirmed: number;
 }
 
 export interface CampaignDaySummary {
   dateStr: string;
-  /** The plan currently governing the rest of this day — see each window's own `slotPlan` for its history. */
   slotPlan: 1 | 2;
   dailyCap: number;
-  /** Reserved the moment a coin win is decided — prevents overselling while a claim is pending. */
   dailyIssued: number;
   dailyRemaining: number;
-  /** Consent letter actually Accepted — the real business number. */
   dailyConfirmed: number;
   windows: CampaignWindowSummary[];
 }
 
-/** Per-date slot/window coupon-quota breakdown — powers the quota panel,
- * the slot/window report filters, and PDF/Excel exports. */
 export async function fetchCampaignDays(range: {
   from?: string;
   to?: string;
@@ -145,4 +130,49 @@ export async function fetchCampaignDays(range: {
     `/api/admin/campaign-days?start=${from}&end=${to}`,
   );
   return days;
+}
+
+export interface AdminLocation {
+  currentLocation: string;
+  state: string;
+  updatedAt: string | null;
+}
+
+export interface AdminLocationHistoryEntry {
+  location: string;
+  updatedAt: string;
+  dateStr: string;
+}
+
+export async function fetchAdminLocation(): Promise<AdminLocation> {
+  const data = await request<{ ok: true } & AdminLocation>("/api/admin/location");
+  return data;
+}
+
+export async function updateAdminLocation(location: string): Promise<AdminLocation> {
+  const data = await request<{ ok: true } & AdminLocation>("/api/admin/location", {
+    method: "POST",
+    body: JSON.stringify({ location }),
+  });
+  return data;
+}
+
+export async function fetchAdminLocationHistory(range: {
+  from?: string;
+  to?: string;
+}): Promise<AdminLocationHistoryEntry[]> {
+  const params = new URLSearchParams();
+  if (range.from) params.set("start", range.from);
+  if (range.to) params.set("end", range.to);
+  const suffix = params.toString() ? `?${params.toString()}` : "";
+  const data = await request<{ ok: true; history: AdminLocationHistoryEntry[] }>(
+    `/api/admin/location-history${suffix}`,
+  );
+  return data.history;
+}
+
+export function adminConsentPdfUrl(userId: string, download = false): string {
+  return `${API_BASE_URL}/api/admin/consent-pdf/${encodeURIComponent(userId)}${
+    download ? "?download=1" : ""
+  }`;
 }

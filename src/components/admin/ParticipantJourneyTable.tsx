@@ -1,13 +1,12 @@
+import { useState } from "react";
 import {
   ArrowDown,
   ArrowUp,
   Award,
   Calendar,
   Coins,
-  Flag,
   Hash,
   Link2,
-  ListTodo,
   MoreHorizontal,
   RotateCw,
   ShieldCheck,
@@ -15,6 +14,7 @@ import {
   User,
 } from "lucide-react";
 
+import { ConsentPdfDialog } from "@/components/admin/ConsentPdfDialog";
 import {
   ParticipantJourneyCard,
   ParticipantJourneyRow,
@@ -33,14 +33,12 @@ const COLUMNS: {
   { label: "Participant", icon: User },
   { label: "Participant Started", sort: "registeredAt", icon: Calendar },
   { label: "Wheel", sort: "wheelSpinCompletedAt", icon: RotateCw },
-  // { label: "Task", icon: ListTodo }, // hidden for now — future use
   { label: "Task Status", sort: "taskStatus", icon: ShieldCheck },
   { label: "Coin Round", sort: "coinFlipCompletedAt", icon: Coins },
   { label: "Coin Result", sort: "coinResult", icon: Award },
   { label: "Consent Link", icon: Link2 },
   { label: "Consent Acknowledgement", icon: ShieldCheck },
   { label: "Coupon Claim", icon: Ticket },
-  // { label: "Final Status", icon: Flag }, // hidden for now — future use
   { label: "Action", icon: MoreHorizontal },
 ];
 
@@ -83,6 +81,8 @@ export function ParticipantJourneyTable({
   onOpen: (p: ParticipantJourney) => void;
   onRetry: () => void;
 }) {
+  const [consentParticipant, setConsentParticipant] = useState<ParticipantJourney | null>(null);
+
   if (error) {
     return (
       <div className="glass-panel rounded-2xl p-10 text-center">
@@ -152,6 +152,7 @@ export function ParticipantJourneyTable({
                   participant={p}
                   index={startIndex + i}
                   onOpen={onOpen}
+                  onOpenConsent={setConsentParticipant}
                 />
               ))
             )}
@@ -169,9 +170,21 @@ export function ParticipantJourneyTable({
             {emptyMessage}
           </div>
         ) : (
-          rows.map((p) => <ParticipantJourneyCard key={p.id} participant={p} onOpen={onOpen} />)
+          rows.map((p) => (
+            <ParticipantJourneyCard
+              key={p.id}
+              participant={p}
+              onOpen={onOpen}
+              onOpenConsent={setConsentParticipant}
+            />
+          ))
         )}
       </div>
+
+      <ConsentPdfDialog
+        participant={consentParticipant}
+        onClose={() => setConsentParticipant(null)}
+      />
     </>
   );
 }

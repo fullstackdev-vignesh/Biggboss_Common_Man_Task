@@ -3,6 +3,7 @@ import {
   CheckCircle2,
   Clock,
   Copy,
+  FileText,
   Link2,
   PanelRightOpen,
   Sparkles,
@@ -95,13 +96,14 @@ export function ParticipantJourneyRow({
   participant,
   index,
   onOpen,
+  onOpenConsent,
 }: {
   participant: ParticipantJourney;
   index: number;
   onOpen: (p: ParticipantJourney) => void;
+  onOpenConsent: (p: ParticipantJourney) => void;
 }) {
   const p = participant;
-  const status = finalStatusOf(p);
   const coinResult = p.coinResult ?? "NOT_FLIPPED";
 
   return (
@@ -129,15 +131,6 @@ export function ParticipantJourneyRow({
           <span className="text-sm text-muted-foreground">—</span>
         )}
       </td>
-      {/* Task column hidden for now — future use
-      <td className="max-w-[260px] px-4 py-4 text-sm leading-snug" title={p.wheelTask ?? ""}>
-        {p.wheelTask ? (
-          <span className="line-clamp-3 block">{p.wheelTask}</span>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )}
-      </td>
-      */}
       <td className="px-4 py-4">
         <StatusBadge
           tone={taskStatusTone(p.taskStatus)}
@@ -222,38 +215,33 @@ export function ParticipantJourneyRow({
           </>
         ) : coinResult === "COUPON_PENDING" ? (
           isClaimExpired(p) ? (
-            <span className="text-destructive text-xs">Link Expired — not claimed</span>
+            <span className="text-xs text-destructive">Link Expired — not claimed</span>
           ) : (
             <span className="text-xs text-amber">Awaiting consent acknowledgement</span>
           )
         ) : coinResult === "COUPON_DECLINED" ? (
-          <span className="text-destructive text-xs">Declined by participant</span>
+          <span className="text-xs text-destructive">Declined by participant</span>
         ) : (
           <span className="text-muted-foreground">—</span>
         )}
       </td>
-      {/* Final Status column hidden for now — future use
-      <td className="px-4 py-4">
-        <StatusBadge
-          tone={
-            status === "COUPON_WINNER"
-              ? "gold"
-              : status === "TASK_FAILED" || status === "COUPON_DECLINED"
-                ? "danger"
-                : status === "BETTER_LUCK_NEXT_TIME" || status === "COUPON_PENDING"
-                  ? "amber"
-                  : "muted"
-          }
-          icon={finalStatusIcon(status)}
-        >
-          {FINAL_STATUS_LABEL[status]}
-        </StatusBadge>
-      </td>
-      */}
       <td className="px-2 py-4">
-        <Button variant="ghost" size="icon" onClick={() => onOpen(p)} aria-label="View details">
-          <PanelRightOpen />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" onClick={() => onOpen(p)} aria-label="View journey">
+            <PanelRightOpen />
+          </Button>
+          {p.claimAccepted && p.consentPdfKey && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onOpenConsent(p)}
+              aria-label="View consent PDF"
+              title="View consent PDF"
+            >
+              <FileText className="text-primary" />
+            </Button>
+          )}
+        </div>
       </td>
     </tr>
   );
@@ -279,13 +267,16 @@ function finalStatusIcon(status: string) {
 export function ParticipantJourneyCard({
   participant,
   onOpen,
+  onOpenConsent,
 }: {
   participant: ParticipantJourney;
   onOpen: (p: ParticipantJourney) => void;
+  onOpenConsent: (p: ParticipantJourney) => void;
 }) {
   const p = participant;
   const status = finalStatusOf(p);
   const coinResult = p.coinResult ?? "NOT_FLIPPED";
+
   return (
     <div className="glass-panel space-y-3 rounded-xl p-4">
       <div className="flex items-start justify-between">
@@ -331,9 +322,16 @@ export function ParticipantJourneyCard({
         </StatusBadge>
         {p.couponCode && <CopyChip label={p.couponCode} value={p.couponCode} />}
       </div>
-      <Button variant="outline" size="sm" className="w-full" onClick={() => onOpen(p)}>
-        View Details
-      </Button>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <Button variant="outline" size="sm" className="w-full" onClick={() => onOpen(p)}>
+          <PanelRightOpen className="size-4" /> View Details
+        </Button>
+        {p.claimAccepted && p.consentPdfKey && (
+          <Button variant="outline" size="sm" className="w-full" onClick={() => onOpenConsent(p)}>
+            <FileText className="size-4" /> Consent PDF
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
