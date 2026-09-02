@@ -1,26 +1,67 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MapPin, Pencil } from "lucide-react";
+import { LocateFixed, MapPin } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { fetchAdminLocation, updateAdminLocation } from "@/lib/admin/api";
 import { formatDate, formatTime } from "@/lib/admin/format";
 
+interface DetectedLocation {
+  label: string;
+  state: string;
+}
+
+async function reverseGeocode(lat: number, lon: number): Promise<DetectedLocation> {
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`,
+    { headers: { Accept: "application/json" } },
+  );
+  if (!res.ok) throw new Error("Could not resolve address for your location.");
+  const body = await res.json();
+  const address = body?.address ?? {};
+  const area =
+    address.suburb || address.town || address.city_district || address.city || address.county;
+  const city = address.city || address.town || address.county;
+  const label = [area, city]
+    .filter(Boolean)
+    .filter((v, i, arr) => arr.indexOf(v) === i)
+    .join(" - ");
+  const state = address.state || "Tamil Nadu";
+  if (!label) throw new Error("Could not determine a location name from GPS.");
+  return { label, state };
+}
+
+function getCurrentPosition(): Promise<GeolocationPosition> {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Geolocation is not supported on this device."));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0,
+    });
+  });
+}
+
+function geolocationErrorMessage(err: unknown): string {
+  if (typeof GeolocationPositionError !== "undefined" && err instanceof GeolocationPositionError) {
+    if (err.code === err.PERMISSION_DENIED) {
+      return "Location permission is blocked. Please enable Location access for this site in your browser settings and try again.";
+    }
+    if (err.code === err.TIMEOUT) {
+      return "Location request timed out. Please try again.";
+    }
+    return "Could not get your GPS location. Please check your device's location settings.";
+  }
+  return err instanceof Error ? err.message : "Could not update location.";
+}
+
 export function AdminLocationPanel() {
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const [value, setValue] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [working, setWorking] = useState(false);
 
   const locationQuery = useQuery({
     queryKey: ["admin-location"],
@@ -28,102 +69,62 @@ export function AdminLocationPanel() {
     refetchOnWindowFocus: false,
   });
 
-  useEffect(() => {
-    if (open) setValue(locationQuery.data?.currentLocation ?? "");
-  }, [open, locationQuery.data?.currentLocation]);
+  async function handleUpdateLocation() {
+    if (working) return;
 
-  async function save() {
-    const location = value.trim().replace(/\s+/g, " ");
-    if (!location) {
-      toast.error("Location is required.");
-      return;
-    }
-
-    setSaving(true);
+    setWorking(true);
     try {
-      await updateAdminLocation(location);
+      const position = await getCurrentPosition();
+      const detected = await reverseGeocode(position.coords.latitude, position.coords.longitude);
+
+      await updateAdminLocation(detected.label, detected.state);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["admin-location"] }),
         queryClient.invalidateQueries({ queryKey: ["admin-location-history"] }),
       ]);
-      setOpen(false);
-      toast.success(`Current location updated to ${location}.`);
+      toast.success(`Current location updated to ${detected.label}.`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not update location.");
+      toast.error(geolocationErrorMessage(err));
     } finally {
-      setSaving(false);
+      setWorking(false);
     }
   }
 
   const data = locationQuery.data;
 
   return (
-    <>
-      <div className="glass-panel flex flex-col gap-3 rounded-xl px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 items-start gap-3">
-          <MapPin className="mt-0.5 size-5 shrink-0 text-primary" />
-          <div className="min-w-0">
-            <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
-              Current Location
+    <div className="glass-panel flex flex-col gap-3 rounded-xl px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 items-start gap-3">
+        <MapPin className="mt-0.5 size-5 shrink-0 text-primary" />
+        <div className="min-w-0">
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+            Current Location
+          </p>
+          {locationQuery.isLoading ? (
+            <div className="shimmer mt-2 h-6 w-32 rounded" />
+          ) : (
+            <p className="display-font mt-1 truncate text-xl gold-text">
+              {data?.currentLocation || "Not configured"}
             </p>
-            {locationQuery.isLoading ? (
-              <div className="shimmer mt-2 h-6 w-32 rounded" />
-            ) : (
-              <p className="display-font mt-1 truncate text-xl gold-text">
-                {data?.currentLocation || "Not configured"}
-              </p>
-            )}
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              {data?.state || "Tamil Nadu"}
-              {data?.updatedAt
-                ? ` · Last updated ${formatDate(data.updatedAt)} ${formatTime(data.updatedAt)}`
-                : ""}
-            </p>
-          </div>
+          )}
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {data?.state || "Tamil Nadu"}
+            {data?.updatedAt
+              ? ` · Last updated ${formatDate(data.updatedAt)} ${formatTime(data.updatedAt)}`
+              : ""}
+          </p>
         </div>
-
-        <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
-          <Pencil className="size-4" /> Update Location
-        </Button>
       </div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Update Current Location</DialogTitle>
-            <DialogDescription>
-              New consent letters will use this admin-managed campaign location.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-2 py-2">
-            <label htmlFor="admin-location" className="text-xs uppercase tracking-wider text-muted-foreground">
-              Location
-            </label>
-            <Input
-              id="admin-location"
-              value={value}
-              maxLength={120}
-              autoFocus
-              placeholder="Example: Madurai"
-              onChange={(event) => setValue(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") void save();
-              }}
-            />
-            <p className="text-xs text-muted-foreground">State: {data?.state || "Tamil Nadu"}</p>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
-              Cancel
-            </Button>
-            <Button onClick={() => void save()} disabled={saving}>
-              {saving ? "Saving…" : "Update Location"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => void handleUpdateLocation()}
+        disabled={working}
+      >
+        <LocateFixed className={working ? "size-4 animate-pulse" : "size-4"} />
+        {working ? "Detecting location…" : "Update Location"}
+      </Button>
+    </div>
   );
 }

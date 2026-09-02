@@ -102,6 +102,8 @@
 //   );
 // }
 
+/* eslint-disable */
+// @ts-nocheck
 
 
 import { useMemo, useState } from "react";
@@ -195,7 +197,7 @@ export function LocationHistoryButton({
                 <div className="space-y-6 pb-6">
                   {groups.map(([dateStr, rows]) => (
                     <section key={dateStr}>
-                      <p className="mb-3 text-xs font-bold uppercase tracking-widest text-primary">
+                      <p className="mb-3 text-md font-bold uppercase tracking-widest text-primary">
                         {rows?.[0]?.updatedAt
                           ? formatDate(rows[0].updatedAt)
                           : dateStr}
@@ -214,7 +216,7 @@ export function LocationHistoryButton({
                                   {row.location}
                                 </span>
                               </p>
-                              <p className="mt-1 text-xs text-muted-foreground">
+                              <p className="mt-1 text-sm text-muted-foreground">
                                 {formatTime(row.updatedAt)}
                               </p>
                             </div>

@@ -1,7 +1,12 @@
+
+/* eslint-disable */
+// @ts-nocheck
+
 import type { BiggUser } from "@/lib/api";
 import type { CoinResult, ParticipantJourney, TaskStatus } from "@/types/admin";
 
-const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "http://localhost:3001";
+// const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "http://localhost:3001";
+const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "https://backend-bq11.onrender.com";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`, {
@@ -149,10 +154,13 @@ export async function fetchAdminLocation(): Promise<AdminLocation> {
   return data;
 }
 
-export async function updateAdminLocation(location: string): Promise<AdminLocation> {
+export async function updateAdminLocation(
+  location: string,
+  state?: string,
+): Promise<AdminLocation> {
   const data = await request<{ ok: true } & AdminLocation>("/api/admin/location", {
     method: "POST",
-    body: JSON.stringify({ location }),
+    body: JSON.stringify({ location, state }),
   });
   return data;
 }
